@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2009
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manta", "Manta\Manta.csproj", "{362419AC-6DAC-40CA-B981-CEA1E410F563}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manta.Sceleton", "Manta.Sceleton\Manta.Sceleton.csproj", "{D517359F-C996-45AA-B501-26E00FAD207F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{362419AC-6DAC-40CA-B981-CEA1E410F563}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{362419AC-6DAC-40CA-B981-CEA1E410F563}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{362419AC-6DAC-40CA-B981-CEA1E410F563}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{362419AC-6DAC-40CA-B981-CEA1E410F563}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D517359F-C996-45AA-B501-26E00FAD207F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D517359F-C996-45AA-B501-26E00FAD207F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D517359F-C996-45AA-B501-26E00FAD207F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D517359F-C996-45AA-B501-26E00FAD207F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1BC55FFE-A2C5-4039-AA38-D9F1D2B3EC88}
+	EndGlobalSection
+EndGlobal
