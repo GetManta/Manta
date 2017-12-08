@@ -2,7 +2,7 @@
 
 namespace Manta
 {
-    public struct UncommittedMessages
+    public class UncommittedMessages
     {
         public UncommittedMessages(Guid correlationId, MessageRecord[] messages, byte[] metadata = null)
         {

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net461' ">
+    <PackageReference Include="System.Data.SqlLocalDb" Version="1.15.0" />
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+</ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="XUnit" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Manta.MsSql\Manta.MsSql.csproj" />
+    <ProjectReference Include="..\Manta\Manta.csproj" />
+  </ItemGroup>
+
+</Project>
