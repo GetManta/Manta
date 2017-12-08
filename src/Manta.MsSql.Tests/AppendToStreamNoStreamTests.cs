@@ -5,48 +5,45 @@ using Xunit;
 
 namespace Manta.MsSql.Tests
 {
-    public class AppendToStreamAnyVersionTests : TestsBase
+    public class AppendToStreamNoStreamTests : TestsBase
     {
-        public AppendToStreamAnyVersionTests(LocalDbFixture fixture) : base(fixture) { }
+        public AppendToStreamNoStreamTests(LocalDbFixture fixture) : base(fixture) { }
 
         [Fact]
-        public async void Appending_messages_to_empty_stream_with_any_version_not_throws()
+        public async void Appending_messages_to_nonexisted_stream_with_nostream_expected_version_not_throws()
         {
             var store = await GetMessageStore();
             const string streamName = "test-123";
             var data = GetUncommitedMessages();
 
-            var exception = await Record.ExceptionAsync(() => store.AppendToStream(streamName, ExpectedVersion.Any, data));
+            var exception = await Record.ExceptionAsync(() => store.AppendToStream(streamName, ExpectedVersion.NoStream, data));
 
             Assert.Null(exception);
         }
 
         [Fact]
-        public async void Appending_messages_to_existing_stream_with_any_version_not_throws()
+        public async void Appending_messages_to_existed_stream_with_nostream_expected_version_throws()
         {
             var store = await GetMessageStore();
-            const string streamName = "test-321";
+            const string streamName = "test-123";
             var data = GetUncommitedMessages();
-
-            await store.AppendToStream(streamName, ExpectedVersion.Any, data);
+            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data);
 
             data = GetUncommitedMessages();
 
-            var exception = await Record.ExceptionAsync(() => store.AppendToStream(streamName, ExpectedVersion.Any, data));
-
-            Assert.Null(exception);
+            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () => await store.AppendToStream(streamName, ExpectedVersion.NoStream, data));
         }
 
         [Fact]
-        public async void Appending_the_same_messages_to_existing_stream_with_any_version_should_be_idempotent()
+        public async void Appending_the_same_messages_to_existed_stream_with_nostream_expected_version_should_be_idempotent()
         {
             var store = await GetMessageStore();
-            const string streamName = "test-321";
+            const string streamName = "test-123";
             var data = GetUncommitedMessages();
 
-            await store.AppendToStream(streamName, ExpectedVersion.Any, data);
+            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data);
 
-            var exception = await Record.ExceptionAsync(() => store.AppendToStream(streamName, ExpectedVersion.Any, data));
+            var exception = await Record.ExceptionAsync(() => store.AppendToStream(streamName, ExpectedVersion.NoStream, data));
 
             Assert.Null(exception);
         }

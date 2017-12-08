@@ -17,9 +17,9 @@ namespace Manta.MsSql.Tests.Infrastructure
 
         protected string ConnectionString { get; }
 
-        protected async Task<IMessageStore> GetMessageStore()
+        protected async Task<IMessageStore> GetMessageStore(bool batching = true)
         {
-            return await _dbInstance.GetMessageStore();
+            return await _dbInstance.GetMessageStore(batching);
         }
 
         public void Dispose()

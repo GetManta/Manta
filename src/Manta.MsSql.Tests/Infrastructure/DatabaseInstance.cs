@@ -32,10 +32,10 @@ namespace Manta.MsSql.Tests.Infrastructure
 
         public string ConnectionString { get; }
 
-        public async Task<IMessageStore> GetMessageStore()
+        public async Task<IMessageStore> GetMessageStore(bool batching = true)
         {
             if (!_databaseCreated) await CreateDatabase(GetLocation()).NotOnCapturedContext();
-            return new MsSqlMessageStore(new MsSqlMessageStoreSettings(ConnectionString));
+            return new MsSqlMessageStore(new MsSqlMessageStoreSettings(ConnectionString, batching));
         }
 
         private static string GetLocation()
