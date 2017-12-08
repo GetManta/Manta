@@ -60,7 +60,7 @@ namespace Manta.MsSql
 
         private async Task AppendToStreamWithAnyVersion(string name, UncommittedMessages data, CancellationToken cancellationToken)
         {
-            if (data.Messages.Length > _settings.BatchSize)
+            if (_settings.Batching && data.Messages.Length > 1)
             {
                 using (var connection = new SqlConnection(_settings.ConnectionString))
                 {

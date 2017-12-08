@@ -73,7 +73,6 @@ namespace Manta.MsSql
             }
         }
 
-
         /// <summary>
         /// Return the batch command to be executed
         /// </summary>

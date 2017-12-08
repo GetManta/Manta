@@ -2,13 +2,13 @@ namespace Manta.MsSql
 {
     public class MsSqlMessageStoreSettings : MessageStoreSettings
     {
-        public MsSqlMessageStoreSettings(string connectionString, int batchSize = 0)
+        public MsSqlMessageStoreSettings(string connectionString, bool batching = true)
         {
             ConnectionString = connectionString;
-            BatchSize = batchSize;
+            Batching = batching;
         }
 
-        public int BatchSize { get; }
+        public bool Batching { get; }
         public string ConnectionString { get; }
     }
 }
