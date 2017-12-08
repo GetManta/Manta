@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[Streams](
     [InternalId] [bigint] IDENTITY(1,1) NOT NULL,
-    [Name] [varchar](64) COLLATE Latin1_General_BIN2 NOT NULL,
+    [Name] [varchar](512) COLLATE Latin1_General_BIN2 NOT NULL,
     [MessageVersion] [int] NOT NULL,
     [MessageId] [uniqueidentifier] NOT NULL,
     [CorrelationId] [uniqueidentifier] NOT NULL,
