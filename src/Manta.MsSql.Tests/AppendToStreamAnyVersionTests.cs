@@ -9,7 +9,7 @@ namespace Manta.MsSql.Tests
         public AppendToStreamAnyVersionTests(LocalDbFixture fixture) : base(fixture) { }
 
         [Fact]
-        public async void appending_messages_with_any_version_not_throws()
+        public async void Appending_messages_with_any_version_not_throws()
         {
             const string streamName = "test-123";
 
@@ -18,7 +18,8 @@ namespace Manta.MsSql.Tests
                 new []
                 {
                     new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), 1, new byte[]{ 1, 2, 3 })
+                    new MessageRecord(Guid.NewGuid(), 1, new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 })
                 });
 
             var store = await GetMessageStore();
