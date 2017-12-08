@@ -1,6 +1,6 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Manta.Sceleton;
@@ -16,9 +16,24 @@ namespace Manta.MsSql
             _settings = settings;
         }
 
-        public Task<RecordedStream> ReadStreamForward(string name, int fromVersion, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<RecordedStream> ReadStreamForward(string name, int fromVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
-            throw new NotImplementedException();
+            using (var connection = new SqlConnection(_settings.ConnectionString))
+            using (var cmd = connection.CreateCommandForReadStreamForward(name, fromVersion))
+            {
+                await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
+                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
+                {
+                    if (!reader.HasRows) return RecordedStream.Empty();
+
+                    var messages = new List<RecordedMessage>(20);
+                    while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read events
+                    {
+                        messages.Add(await reader.FillRecordedMessage(cancellationToken).NotOnCapturedContext());
+                    }
+                    return new RecordedStream(messages.ToArray());
+                }
+            }
         }
 
         public async Task AppendToStream(string name, int expectedVersion, UncommittedMessages data, CancellationToken cancellationToken = default(CancellationToken))
@@ -57,7 +72,7 @@ namespace Manta.MsSql
                     }
 
                     await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
-                    using (var tran = connection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+                    using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                     {
                         try
                         {
@@ -83,7 +98,7 @@ namespace Manta.MsSql
                 using (var connection = new SqlConnection(_settings.ConnectionString))
                 {
                     await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
-                    using (var tran = connection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+                    using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                     {
                         try
                         {
@@ -129,7 +144,7 @@ namespace Manta.MsSql
                     }
 
                     await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
-                    using (var tran = connection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+                    using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                     {
                         try
                         {
@@ -155,7 +170,7 @@ namespace Manta.MsSql
                 using (var connection = new SqlConnection(_settings.ConnectionString))
                 {
                     await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
-                    using (var tran = connection.BeginTransaction(System.Data.IsolationLevel.ReadCommitted))
+                    using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                     {
                         try
                         {

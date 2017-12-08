@@ -133,3 +133,27 @@ BEGIN
     VALUES(@StreamName,1,@MessageId,@CorrelationId,@ContractId,@Payload)
 END;
 GO
+
+CREATE PROCEDURE [dbo].[mantaReadStreamForward]
+(
+    @StreamName VARCHAR(512),
+    @FromVersion INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        s.[MessageId],
+        s.[MessageVersion],
+        s.[ContractId],
+        s.[Payload]
+    FROM
+        [Streams] s WITH(READPAST,ROWLOCK)
+    WHERE
+        s.[Name] = @StreamName
+        AND s.[MessageVersion] >= @FromVersion
+    ORDER BY
+        s.[MessageVersion] ASC
+END;
+GO

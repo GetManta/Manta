@@ -4,11 +4,11 @@ namespace Manta
 {
     public struct RecordedMessage
     {
-        public RecordedMessage(Guid messageId, int contractId, int version, byte[] payload)
+        public RecordedMessage(Guid messageId, int version, int contractId, byte[] payload)
         {
             MessageId = messageId;
-            ContractId = contractId;
             Version = version;
+            ContractId = contractId;
             Payload = payload;
         }
 
