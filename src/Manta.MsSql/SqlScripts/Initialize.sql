@@ -29,10 +29,10 @@ CREATE NONCLUSTERED INDEX [IX_Streams_ContractId] ON [dbo].[Streams]
 WHERE ([MessagePosition] IS NOT NULL);
 
 -- For idempotency checking per stream
-CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_Name_MessageId] ON [dbo].[Streams]
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_MessageId_Name] ON [dbo].[Streams]
 (
-    [Name] ASC,
-    [MessageId] ASC
+    [MessageId] ASC,
+    [Name] ASC
 );
 
 CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_InternalId] ON [dbo].[Streams]
