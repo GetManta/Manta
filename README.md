@@ -3,6 +3,9 @@ Event store library for .NET Core based on rdbms persistance.
 
 *A thin (but powerful) slice of library between your code and rdbms.*
 
+# Status
+NOT READY FOR PRODUCTION YET
+
 # Installation
 Manta is not available on NuGet, yet.
 
@@ -18,7 +21,7 @@ You can download source code from this repository and compile under Visual Studi
  - Support optimistic concurrency with conflict resolver mechanism
  - Support any kind of message serialization
  - Support any kind of loggers through ILogger interface
- - MS SQL Server persistance implementation
+ - MS SQL Server persistance implementation (without Linearizer)
 
 last but not least
 
