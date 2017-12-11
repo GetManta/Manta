@@ -2,17 +2,19 @@
 
 namespace Manta
 {
-    public struct MessageRecord
+    public struct RecordedMessage
     {
-        public MessageRecord(Guid messageId, int contractId, byte[] payload)
+        public RecordedMessage(Guid messageId, int version, int contractId, byte[] payload)
         {
             MessageId = messageId;
+            Version = version;
             ContractId = contractId;
             Payload = payload;
         }
 
         public Guid MessageId { get; }
         public int ContractId { get; }
+        public int Version { get; }
         public byte[] Payload { get; }
     }
 }
