@@ -54,7 +54,7 @@ namespace Manta.MsSql
 
         private async Task AppendToStreamWithExpectedVersion(string name, int expectedVersion, UncommittedMessages data, CancellationToken cancellationToken)
         {
-            if (_settings.Batching && data.Messages.Length > 1)
+            if (SqlClientSqlCommandSet.IsSqlCommandSetAvailable && _settings.Batching && data.Messages.Length > 1)
             {
                 using (var connection = new SqlConnection(_settings.ConnectionString))
                 using (var batch = new SqlClientSqlCommandSet(connection))
@@ -133,7 +133,7 @@ namespace Manta.MsSql
 
         private async Task AppendToStreamWithAnyVersion(string name, UncommittedMessages data, CancellationToken cancellationToken)
         {
-            if (_settings.Batching && data.Messages.Length > 1)
+            if (SqlClientSqlCommandSet.IsSqlCommandSetAvailable && _settings.Batching && data.Messages.Length > 1)
             {
                 using (var connection = new SqlConnection(_settings.ConnectionString))
                 using (var batch = new SqlClientSqlCommandSet(connection))

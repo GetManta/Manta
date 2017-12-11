@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,29 +23,36 @@ namespace Manta.MsSql
         {
             var sysData = typeof(SqlCommand).Assembly;
             sqlCmdSetType = sysData.GetType("System.Data.SqlClient.SqlCommandSet");
-            Debug.Assert(sqlCmdSetType != null, "Could not find SqlCommandSet!");
 
-            var p1 = Expression.Parameter(typeof(object));
-            var converted = Expression.Convert(p1, sqlCmdSetType);
+            if (sqlCmdSetType != null)
+            {
+                IsSqlCommandSetAvailable = true;
 
-            var con = Expression.Parameter(typeof(SqlConnection));
-            var tran = Expression.Parameter(typeof(SqlTransaction));
-            var cmd = Expression.Parameter(typeof(SqlCommand));
+                var p1 = Expression.Parameter(typeof(object));
+                var converted = Expression.Convert(p1, sqlCmdSetType);
 
-            setConnection = Expression.Lambda<Action<object, SqlConnection>>(Expression.Call(converted, "set_Connection", null, con), p1, con).Compile();
-            getConnection = Expression.Lambda<Func<object, SqlConnection>>(Expression.Call(converted, "get_Connection", null), p1).Compile();
-            setTransaction = Expression.Lambda<Action<object, SqlTransaction>>(Expression.Call(converted, "set_Transaction", null, tran), p1, tran).Compile();
-            getCommand = Expression.Lambda<Func<object, SqlCommand>>(Expression.Call(converted, "get_BatchCommand", null), p1).Compile();
-            appendMethod = Expression.Lambda<Action<object, SqlCommand>>(Expression.Call(converted, "Append", null, cmd), p1, cmd).Compile();
-            executeNonQueryMethod = Expression.Lambda<Func<object, int>>(Expression.Call(converted, "ExecuteNonQuery", null), p1).Compile();
-            disposeMethod = Expression.Lambda<Action<object>>(Expression.Call(converted, "Dispose", null), p1).Compile();
+                var con = Expression.Parameter(typeof(SqlConnection));
+                var tran = Expression.Parameter(typeof(SqlTransaction));
+                var cmd = Expression.Parameter(typeof(SqlCommand));
+
+                setConnection = Expression.Lambda<Action<object, SqlConnection>>(Expression.Call(converted, "set_Connection", null, con), p1, con).Compile();
+                getConnection = Expression.Lambda<Func<object, SqlConnection>>(Expression.Call(converted, "get_Connection", null), p1).Compile();
+                setTransaction = Expression.Lambda<Action<object, SqlTransaction>>(Expression.Call(converted, "set_Transaction", null, tran), p1, tran).Compile();
+                getCommand = Expression.Lambda<Func<object, SqlCommand>>(Expression.Call(converted, "get_BatchCommand", null), p1).Compile();
+                appendMethod = Expression.Lambda<Action<object, SqlCommand>>(Expression.Call(converted, "Append", null, cmd), p1, cmd).Compile();
+                executeNonQueryMethod = Expression.Lambda<Func<object, int>>(Expression.Call(converted, "ExecuteNonQuery", null), p1).Compile();
+                disposeMethod = Expression.Lambda<Action<object>>(Expression.Call(converted, "Dispose", null), p1).Compile();
+            }
         }
 
         public SqlClientSqlCommandSet(SqlConnection connection = null)
         {
+            if (sqlCmdSetType == null) throw new InvalidOperationException("Batching is not available at this platform.");
             _instance = Activator.CreateInstance(sqlCmdSetType, true);
             Connection = connection;
         }
+
+        public static bool IsSqlCommandSetAvailable { get; }
 
         /// <summary>
         /// Append a command to the batch
