@@ -22,7 +22,7 @@ namespace Manta.MsSql
             using (var cmd = connection.CreateCommandForReadStreamForward(name, fromVersion))
             {
                 await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
-                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
+                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancellationToken).NotOnCapturedContext())
                 {
                     if (!reader.HasRows) return RecordedStream.Empty();
 
