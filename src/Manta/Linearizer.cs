@@ -17,7 +17,7 @@ namespace Manta
         {
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null, Site = null };
-            _timer.Elapsed += OnTimerElapsed;
+            _timer.Elapsed += (s, e) => Execute().SwallowException();
             WorkDuration = workDuration;
             Timeout = timeout;
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
@@ -53,11 +53,6 @@ namespace Manta
         protected abstract Task<bool> Linearize(CancellationToken cancellationToken);
 
         protected ILogger Logger { get; }
-
-        private void OnTimerElapsed(object o, ElapsedEventArgs args)
-        {
-            Execute().SwallowException();
-        }
 
         private async Task Execute()
         {
