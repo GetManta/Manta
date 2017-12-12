@@ -160,27 +160,22 @@ GO
 
 CREATE PROCEDURE [dbo].[mantaLinearizeStreams]
 (
-    @Limit INT
+    @BatchSize INT
 )
 AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @Id BIGINT, @Version INT, @StreamName VARCHAR(512), @MessagePosition BIGINT
+    DECLARE @MessagePosition BIGINT
 
     SELECT @MessagePosition = IsNull(MAX(s.[MessagePosition]), 0) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] > 0
 
-    DECLARE cur CURSOR FAST_FORWARD FOR
-        SELECT TOP(@Limit) s.[InternalId], s.[MessageVersion], s.[Name] FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC
-    OPEN cur
-    FETCH NEXT FROM cur INTO @Id, @Version, @StreamName
-    WHILE @@FETCH_STATUS = 0 BEGIN
+    UPDATE dest SET
+        [MessagePosition] = @MessagePosition,
+        @MessagePosition = @MessagePosition + 1
+    FROM
+        [Streams] dest
+        INNER JOIN (SELECT TOP(@BatchSize) s.[InternalId] FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC) src ON src.InternalId = dest.InternalId
 
-        SET @MessagePosition = @MessagePosition + 1
-        UPDATE [Streams] SET [MessagePosition] = @MessagePosition WHERE [InternalId] = @Id
-        -- Do whatever needs here when eventual consistency can be possible.
-
-    FETCH NEXT FROM cur INTO @Id, @Version, @StreamName END
-    CLOSE cur
-    DEALLOCATE cur
+    SELECT TOP 1 1 FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL
 END;
 GO
