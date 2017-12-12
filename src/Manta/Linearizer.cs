@@ -35,6 +35,27 @@ namespace Manta
             Logger.Debug("Linearizer for duration {0} minute(s) started.", Math.Round(WorkDuration.TotalMinutes, 2));
         }
 
+        public async Task RunNow()
+        {
+            try
+            {
+                if (_isRunning) return;
+                _isRunning = true;
+                while (true)
+                {
+                    if (!(await Linearize(_disposedTokenSource.Token).NotOnCapturedContext())) break;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e.ToString());
+            }
+            finally
+            {
+                _isRunning = false;
+            }
+        }
+
         public void Stop()
         {
             if (_timer == null) return;
