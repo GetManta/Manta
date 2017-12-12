@@ -110,7 +110,7 @@ namespace Manta.MsSql
 
                             if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
                             {
-                                throw new WrongExpectedVersionException($"Appending new or existing stream '{name}' error.", e);
+                                throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{name}' with expected version {ExpectedVersion.Parse(expectedVersion)} failed.", e);
                             }
                             throw;
                         }
@@ -146,7 +146,7 @@ namespace Manta.MsSql
 
                             if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
                             {
-                                throw new WrongExpectedVersionException($"Appending new or existing stream '{name}' error.", e);
+                                throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{name}' with expected version {ExpectedVersion.Parse(expectedVersion)} failed.", e);
                             }
                             throw;
                         }
@@ -184,7 +184,7 @@ namespace Manta.MsSql
 
                             if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
                             {
-                                throw new WrongExpectedVersionException($"Appending new or existing stream '{name}' error.", e);
+                                throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{name}' with any version failed.", e);
                             }
                             throw;
                         }
@@ -216,7 +216,7 @@ namespace Manta.MsSql
 
                             if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
                             {
-                                throw new WrongExpectedVersionException($"Appending new or existing stream '{name}' error.", e);
+                                throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{name}' with any version failed.", e);
                             }
                             throw;
                         }
