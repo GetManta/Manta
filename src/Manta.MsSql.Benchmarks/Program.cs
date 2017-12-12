@@ -11,7 +11,7 @@ namespace Manta.MsSql.Benchmarks
 {
     class Program
     {
-        private const string connectionString = "data source=(local); initial catalog = mantabench; Integrated Security = True; Enlist = false; applicationName = Manta;";
+        private const string connectionString = "data source=(local); initial catalog = mantabench; Integrated Security = True; Enlist = false;";
         private static readonly Random rnd = new Random();
         private static IMessageStore store;
 

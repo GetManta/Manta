@@ -3,6 +3,9 @@ Event store library for .NET Core based on rdbms persistance.
 
 *A thin (but powerful) slice of library between your code and rdbms.*
 
+# Status
+NOT READY FOR PRODUCTION YET
+
 # Installation
 Manta is not available on NuGet, yet.
 
@@ -10,21 +13,28 @@ You can download source code from this repository and compile under Visual Studi
 
 # Main goals
 
-### Implemented
- - Async all the way down (sync methods also available)
+### Done
+ - Async all the way down
  - No external dependencies
  - Pluggable persistance storage
- - Support optimistic concurrency with conflict resolver mechanism
+ - Idempotent writes
+ - Support optimistic concurrency
  - Support any kind of message serialization
  - Support any kind of loggers through ILogger interface
- - MS SQL Server persistance implementation
+ - MS SQL Server persistance implementation (without Linearizer)
+ - Single-writer pattern for MS SQL Server implementation (Linearizer)
+
+last but not least
+
+ - performance - on i5 2500k with SSD benchmarked ~15,000 writes per second and ~30,000 reads per second
 
 ### To be done
- - Manta - InMemory implementation
+ - InMemory implementation
  - Manta.PostgreSql - [PostgreSql](https://www.postgresql.org/) implementation
- - Manta.MsSql - Single-writer pattern for MS SQL Server implementation (Linearizer)
- - Manta.Sceleton - Support up-conversion of events to the newest version
- - Manta.Subscriptions - Subscriptions to one or many event stream sources for processmanagers/projections/others (with pluggable stream pollers)
+ - Manta.MySql - [MySql](https://www.mysql.com/) implementation
+ - Conflict resolver
+ - Support up-conversion of events to the newest version
+ - Subscriptions to one or many event stream sources for processmanagers/projections/others (with pluggable stream pollers)
 
 # Getting started
 

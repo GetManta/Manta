@@ -11,5 +11,6 @@ namespace Manta
         }
 
         public ILogger Logger { get; protected set; }
+        public ILinearizer Linearizer { get; protected set; }
     }
 }

@@ -59,20 +59,33 @@ namespace Manta.MsSql
             if (expectedVersion < ExpectedVersion.Any) throw new ArgumentException("Expected version must be greater or equal 1, or 'Any', or 'NoStream'.", nameof(expectedVersion));
             if (data == null) throw new ArgumentNullException(nameof(data));
 
-            switch (expectedVersion)
+            try
             {
-                default:
-                    _settings.Logger.Trace("Appending {0} messages to stream '{1}' with expected version {2}...", data.Messages.Length, name, expectedVersion);
-                    await AppendToStreamWithExpectedVersion(name, expectedVersion, data, cancellationToken).NotOnCapturedContext();
-                    break;
-                case ExpectedVersion.Any:
-                    _settings.Logger.Trace("Appending {0} messages to stream '{1}' with any version...", data.Messages.Length, name);
-                    await AppendToStreamWithAnyVersion(name, data, cancellationToken).NotOnCapturedContext();
-                    break;
-                case ExpectedVersion.NoStream:
-                    _settings.Logger.Trace("Appending {0} messages to stream '{1}' where stream not existed yet...", data.Messages.Length, name);
-                    await AppendToStreamWithExpectedVersion(name, ExpectedVersion.NoStream, data, cancellationToken).NotOnCapturedContext();
-                    break;
+                switch (expectedVersion)
+                {
+                    default:
+                        _settings.Logger.Trace("Appending {0} messages to stream '{1}' with expected version {2}...", data.Messages.Length, name, expectedVersion);
+                        await AppendToStreamWithExpectedVersion(name, expectedVersion, data, cancellationToken).NotOnCapturedContext();
+                        break;
+                    case ExpectedVersion.Any:
+                        _settings.Logger.Trace("Appending {0} messages to stream '{1}' with any version...", data.Messages.Length, name);
+                        await AppendToStreamWithAnyVersion(name, data, cancellationToken).NotOnCapturedContext();
+                        break;
+                    case ExpectedVersion.NoStream:
+                        _settings.Logger.Trace("Appending {0} messages to stream '{1}' where stream not existed yet...", data.Messages.Length, name);
+                        await AppendToStreamWithExpectedVersion(name, ExpectedVersion.NoStream, data, cancellationToken).NotOnCapturedContext();
+                        break;
+                }
+
+                _settings.Linearizer?.Start();
+            }
+            catch (WrongExpectedVersionException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                _settings.Logger.Error(e.ToString());
             }
         }
 

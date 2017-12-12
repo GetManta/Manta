@@ -176,6 +176,6 @@ BEGIN
         [Streams] dest
         INNER JOIN (SELECT TOP(@BatchSize) s.[InternalId] FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC) src ON src.InternalId = dest.InternalId
 
-    SELECT TOP 1 1 FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL
+    SELECT TOP 1 1 FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC
 END;
 GO
