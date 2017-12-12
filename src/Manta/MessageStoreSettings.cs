@@ -1,9 +1,15 @@
 ﻿using Manta.Sceleton;
+using Manta.Sceleton.Logging;
 
 namespace Manta
 {
     public abstract class MessageStoreSettings
     {
-        public ILogger Logger { get; internal set; }
+        protected MessageStoreSettings()
+        {
+            Logger = new NullLogger();
+        }
+
+        public ILogger Logger { get; protected set; }
     }
 }
