@@ -53,7 +53,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WHERE s.[Name]=@StreamName AND s.[MessageId]=@MessageId) BEGIN
+    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WITH(READPAST,ROWLOCK) WHERE s.[Name]=@StreamName AND s.[MessageId]=@MessageId) BEGIN
         RETURN; -- idempotency checking
     END
 
@@ -66,7 +66,7 @@ BEGIN
         @ContractId,
         @Payload
     FROM
-        [Streams] s
+        [Streams] s WITH(READPAST,ROWLOCK)
     WHERE
         s.[Name] = @StreamName
 END;
@@ -85,7 +85,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WHERE s.[Name]=@StreamName AND s.[MessageId]=@MessageId) BEGIN
+    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WITH(READPAST,ROWLOCK) WHERE s.[Name]=@StreamName AND s.[MessageId]=@MessageId) BEGIN
         RETURN; -- idempotency checking
     END
 
@@ -98,7 +98,7 @@ BEGIN
         @ContractId,
         @Payload
     FROM
-        [Streams] s
+        [Streams] s WITH(READPAST,ROWLOCK)
     WHERE
         s.[Name] = @StreamName
         AND s.[MessageVersion] = (@MessageVersion - 1)
@@ -121,10 +121,10 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WHERE s.[Name]=@StreamName AND s.[MessageId]=@MessageId) BEGIN
+    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WITH(READPAST,ROWLOCK) WHERE s.[Name]=@StreamName AND s.[MessageId]=@MessageId) BEGIN
         RETURN; -- idempotency checking
     END
-    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WHERE s.[Name]=@StreamName) BEGIN
+    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WITH(READPAST,ROWLOCK) WHERE s.[Name]=@StreamName) BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
         RETURN;
     END
@@ -155,5 +155,32 @@ BEGIN
         AND s.[MessageVersion] >= @FromVersion
     ORDER BY
         s.[MessageVersion] ASC
+END;
+GO
+
+CREATE PROCEDURE [dbo].[mantaLinearizeStreams]
+(
+    @Limit INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @Id BIGINT, @Version INT, @StreamName VARCHAR(512), @MessagePosition BIGINT
+
+    SELECT @MessagePosition = IsNull(MAX(s.[MessagePosition]), 0) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] > 0
+
+    DECLARE cur CURSOR FAST_FORWARD FOR
+        SELECT TOP(@Limit) s.[InternalId], s.[MessageVersion], s.[Name] FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC
+    OPEN cur
+    FETCH NEXT FROM cur INTO @Id, @Version, @StreamName
+    WHILE @@FETCH_STATUS = 0 BEGIN
+
+        SET @MessagePosition = @MessagePosition + 1
+        UPDATE [Streams] SET [MessagePosition] = @MessagePosition WHERE [InternalId] = @Id
+        -- Do whatever needs here when eventual consistency can be possible.
+
+    FETCH NEXT FROM cur INTO @Id, @Version, @StreamName END
+    CLOSE cur
+    DEALLOCATE cur
 END;
 GO

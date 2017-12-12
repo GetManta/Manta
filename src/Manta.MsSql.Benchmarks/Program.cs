@@ -18,7 +18,7 @@ namespace Manta.MsSql.Benchmarks
         {
             Console.WriteLine("Manta Benchmarks - {0} batching...", SqlClientSqlCommandSet.IsSqlCommandSetAvailable ? "With" : "Without");
             store = new MsSqlMessageStore(new MsSqlMessageStoreSettings(connectionString));
-            var streams = GenerateStreams(250000, 4, out var messagesCount);
+            var streams = GenerateStreams(250000, 10, out var messagesCount);
             TestMultithreaded(streams, messagesCount).Wait();
             Console.ReadKey();
         }
