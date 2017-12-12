@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Manta.Sceleton;
@@ -10,15 +11,16 @@ namespace Manta.MsSql.Benchmarks
 {
     class Program
     {
-        private const string connectionString = "data source=(local); initial catalog = mantabench; Integrated Security = True; Enlist = false;";
+        private const string connectionString = "data source=(local); initial catalog = mantabench; Integrated Security = True; Enlist = false; applicationName = Manta;";
         private static readonly Random rnd = new Random();
         private static IMessageStore store;
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Manta Benchmarks - {0} batching...", SqlClientSqlCommandSet.IsSqlCommandSetAvailable ? "With" : "Without");
-            store = new MsSqlMessageStore(new MsSqlMessageStoreSettings(connectionString));
+            Console.WriteLine("Manta Benchmarks ({0}) {1} batching...", RuntimeInformation.FrameworkDescription, SqlClientSqlCommandSet.IsSqlCommandSetAvailable ? "With" : "Without");
+            Console.WriteLine("{0} ({1})", RuntimeInformation.OSDescription, RuntimeInformation.OSArchitecture);
             var streams = GenerateStreams(250000, 10, out var messagesCount);
+            store = new MsSqlMessageStore(new MsSqlMessageStoreSettings(connectionString));
             TestMultithreaded(streams, messagesCount).Wait();
             Console.ReadKey();
         }
