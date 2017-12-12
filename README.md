@@ -18,7 +18,7 @@ You can download source code from this repository and compile under Visual Studi
  - No external dependencies
  - Pluggable persistance storage
  - Idempotent writes
- - Support optimistic concurrency with conflict resolver mechanism
+ - Support optimistic concurrency
  - Support any kind of message serialization
  - Support any kind of loggers through ILogger interface
  - MS SQL Server persistance implementation (without Linearizer)
@@ -28,12 +28,13 @@ last but not least
  - performance - on i5 2500k with SSD benchmarked ~15,000 writes per second and ~30,000 reads per second
 
 ### To be done
- - Manta - InMemory implementation
+ - InMemory implementation
  - Manta.PostgreSql - [PostgreSql](https://www.postgresql.org/) implementation
  - Manta.MySql - [MySql](https://www.mysql.com/) implementation
- - Manta.MsSql - Single-writer pattern for MS SQL Server implementation (Linearizer)
- - Manta.Sceleton - Support up-conversion of events to the newest version
- - Manta.Subscriptions - Subscriptions to one or many event stream sources for processmanagers/projections/others (with pluggable stream pollers)
+ - Single-writer pattern for MS SQL Server implementation (Linearizer)
+ - Conflict resolver
+ - Support up-conversion of events to the newest version
+ - Subscriptions to one or many event stream sources for processmanagers/projections/others (with pluggable stream pollers)
 
 # Getting started
 
