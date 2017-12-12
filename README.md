@@ -22,6 +22,7 @@ You can download source code from this repository and compile under Visual Studi
  - Support any kind of message serialization
  - Support any kind of loggers through ILogger interface
  - MS SQL Server persistance implementation (without Linearizer)
+ - Single-writer pattern for MS SQL Server implementation (Linearizer)
 
 last but not least
 
@@ -31,7 +32,6 @@ last but not least
  - InMemory implementation
  - Manta.PostgreSql - [PostgreSql](https://www.postgresql.org/) implementation
  - Manta.MySql - [MySql](https://www.mysql.com/) implementation
- - Single-writer pattern for MS SQL Server implementation (Linearizer)
  - Conflict resolver
  - Support up-conversion of events to the newest version
  - Subscriptions to one or many event stream sources for processmanagers/projections/others (with pluggable stream pollers)

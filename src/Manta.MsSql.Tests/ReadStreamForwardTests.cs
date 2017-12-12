@@ -1,7 +1,6 @@
 ﻿using System;
 using Manta.MsSql.Tests.Infrastructure;
 using Xunit;
-// ReSharper disable PossibleNullReferenceException
 
 namespace Manta.MsSql.Tests
 {
