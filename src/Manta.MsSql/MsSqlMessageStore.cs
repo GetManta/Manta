@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading;
@@ -14,23 +15,39 @@ namespace Manta.MsSql
         public MsSqlMessageStore(MsSqlMessageStoreSettings settings)
         {
             _settings = settings;
+            CheckForBatchingAvailability();
+        }
+
+        private void CheckForBatchingAvailability()
+        {
+            if (SqlClientSqlCommandSet.IsSqlCommandSetAvailable)
+            {
+                _settings.Logger.Info("Batching is not available.");
+            }
         }
 
         public async Task<RecordedStream> ReadStreamForward(string name, int fromVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
+            _settings.Logger.Trace("Reading stream '{0}' forward from version {1}...", name, fromVersion);
+
             using (var connection = new SqlConnection(_settings.ConnectionString))
             using (var cmd = connection.CreateCommandForReadStreamForward(name, fromVersion))
             {
                 await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
                 using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancellationToken).NotOnCapturedContext())
                 {
-                    if (!reader.HasRows) return RecordedStream.Empty();
-
-                    var messages = new List<RecordedMessage>(20);
-                    while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read events
+                    if (!reader.HasRows)
                     {
-                        messages.Add(await reader.FillRecordedMessage(cancellationToken).NotOnCapturedContext());
+                        _settings.Logger.Trace("Read 0 messages for '{0}' stream from version {1}.", name, fromVersion);
+                        return RecordedStream.Empty();
                     }
+
+                    var messages = new List<RecordedMessage>(20); // 20? How many will be enough?
+                    while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
+                    {
+                        messages.Add(await reader.GetRecordedMessage(cancellationToken).NotOnCapturedContext());
+                    }
+                    _settings.Logger.Trace("Read {0} messages for '{1}' stream from version {2}.", messages.Count, name, fromVersion);
                     return new RecordedStream(messages.ToArray());
                 }
             }
@@ -38,15 +55,22 @@ namespace Manta.MsSql
 
         public async Task AppendToStream(string name, int expectedVersion, UncommittedMessages data, CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (name.IsNullOrEmpty()) throw new ArgumentNullException(nameof(name));
+            if (expectedVersion < ExpectedVersion.Any) throw new ArgumentException("Expected version must be greater or equal 1, or 'Any', or 'NoStream'.", nameof(expectedVersion));
+            if (data == null) throw new ArgumentNullException(nameof(data));
+
             switch (expectedVersion)
             {
                 default:
+                    _settings.Logger.Trace("Appending {0} messages to stream '{1}' with expected version {2}...", data.Messages.Length, name, expectedVersion);
                     await AppendToStreamWithExpectedVersion(name, expectedVersion, data, cancellationToken).NotOnCapturedContext();
                     break;
                 case ExpectedVersion.Any:
+                    _settings.Logger.Trace("Appending {0} messages to stream '{1}' with any version...", data.Messages.Length, name);
                     await AppendToStreamWithAnyVersion(name, data, cancellationToken).NotOnCapturedContext();
                     break;
                 case ExpectedVersion.NoStream:
+                    _settings.Logger.Trace("Appending {0} messages to stream '{1}' where stream not existed yet...", data.Messages.Length, name);
                     await AppendToStreamWithExpectedVersion(name, ExpectedVersion.NoStream, data, cancellationToken).NotOnCapturedContext();
                     break;
             }
@@ -133,6 +157,8 @@ namespace Manta.MsSql
 
         private async Task AppendToStreamWithAnyVersion(string name, UncommittedMessages data, CancellationToken cancellationToken)
         {
+            _settings.Logger.Trace("Appending {0} messages to stream '{1}' with any version...", data.Messages.Length, name);
+
             if (SqlClientSqlCommandSet.IsSqlCommandSetAvailable && _settings.Batching && data.Messages.Length > 1)
             {
                 using (var connection = new SqlConnection(_settings.ConnectionString))
@@ -199,6 +225,9 @@ namespace Manta.MsSql
             }
         }
 
-        public IMessageStoreAdvanced Advanced { get; }
+        public IMessageStoreAdvanced Advanced
+        {
+            get { throw new NotImplementedException(); }
+        }
     }
 }
