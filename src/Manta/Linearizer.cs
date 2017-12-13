@@ -9,7 +9,7 @@ namespace Manta
     {
         private CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
         private System.Timers.Timer _timer;
-        private volatile bool _isRunning;
+        private volatile bool _isWorking;
         private readonly InterlockedDateTime _startedAt;
 
         protected Linearizer(ILogger logger, TimeSpan timeout, TimeSpan workDuration)
@@ -22,25 +22,32 @@ namespace Manta
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
         }
 
-        public bool IsRunning => _isRunning;
+        /// <inheritdoc />
+        public bool IsWorking => _isWorking;
+
+        /// <inheritdoc />
         public TimeSpan WorkDuration { get; }
+
+        /// <inheritdoc />
         public TimeSpan Timeout { get; }
 
+        /// <inheritdoc />
         public void Start()
         {
             _startedAt.Set(DateTime.UtcNow);
-            if (_isRunning) return;
-            _isRunning = true;
+            if (_isWorking) return;
+            _isWorking = true;
             _timer.Start();
             Logger.Debug("Linearizer for duration {0} minute(s) started.", Math.Round(WorkDuration.TotalMinutes, 2));
         }
 
+        /// <inheritdoc />
         public async Task RunNow()
         {
             try
             {
-                if (_isRunning) return;
-                _isRunning = true;
+                if (_isWorking) return;
+                _isWorking = true;
                 while (true)
                 {
                     if (!(await Linearize(_disposedTokenSource.Token).NotOnCapturedContext())) break;
@@ -52,15 +59,16 @@ namespace Manta
             }
             finally
             {
-                _isRunning = false;
+                _isWorking = false;
             }
         }
 
+        /// <inheritdoc />
         public void Stop()
         {
             if (_timer == null) return;
             _timer.Stop();
-            _isRunning = false;
+            _isWorking = false;
             _startedAt.Set(DateTime.MaxValue);
             Logger.Debug("Linearizer stopped.");
         }
@@ -96,13 +104,13 @@ namespace Manta
                 finally
                 {
                     _timer.Start();
-                    _startedAt.Set(DateTime.UtcNow);
                 }
             }
         }
 
         private bool ShouldStop() => (DateTime.UtcNow - _startedAt.Value) > WorkDuration;
 
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(true);
