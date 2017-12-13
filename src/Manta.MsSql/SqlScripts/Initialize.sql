@@ -39,6 +39,18 @@ CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_InternalId] ON [dbo].[Streams]
 (
     [InternalId] ASC
 );
+
+CREATE TABLE [dbo].[StreamsStats](
+    [InternalId] [int] IDENTITY(1,1) NOT NULL,
+    [MaxMessagePosition] [int] NOT NULL DEFAULT(0),
+    [CountOfAllMessages] [int] NOT NULL DEFAULT(0),
+    CONSTRAINT [PK_StreamsStats] PRIMARY KEY CLUSTERED
+    (
+        [InternalId] ASC
+    )
+);
+
+INSERT INTO [dbo].[StreamsStats]([MaxMessagePosition],[CountOfAllMessages])VALUES(0,0);
 GO
 
 CREATE PROCEDURE [dbo].[mantaAppendAnyVersion]
@@ -175,6 +187,13 @@ BEGIN
     FROM
         [Streams] dest
         INNER JOIN (SELECT TOP(@BatchSize) s.[InternalId] FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC) src ON src.InternalId = dest.InternalId
+
+    SELECT @MessagePosition = IsNull(MAX(s.[MessagePosition]), 0) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] > 0
+
+    -- Update stats
+    UPDATE StreamsStats SET
+        MaxMessagePosition = @MessagePosition,
+        CountOfAllMessages = (SELECT SUM(st.row_count) FROM sys.dm_db_partition_stats st WHERE object_name(object_id) = 'Streams' AND (index_id < 2))
 
     SELECT TOP 1 1 FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC
 END;
