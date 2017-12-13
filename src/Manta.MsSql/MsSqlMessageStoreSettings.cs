@@ -5,6 +5,7 @@ namespace Manta.MsSql
     public class MsSqlMessageStoreSettings : MessageStoreSettings
     {
         public MsSqlMessageStoreSettings(string connectionString, bool batching = true)
+            : base(null)
         {
             ConnectionString = connectionString;
             Batching = batching;
