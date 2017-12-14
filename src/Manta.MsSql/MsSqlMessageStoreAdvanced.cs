@@ -60,7 +60,7 @@ namespace Manta.MsSql
                 await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
                 var head = await cmd.ExecuteScalarAsync(cancellationToken).NotOnCapturedContext() ?? 0;
                 if (head == DBNull.Value) head = 0;
-                _settings.Logger.Trace("Read {0} head message position.", head);
+                _settings.Logger.Trace("Read head message position as {0}.", head);
                 return (long)head;
             }
         }
