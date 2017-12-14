@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Manta.Sceleton;
+using Manta.Sceleton.Logging;
 
 namespace Manta.MsSql.Benchmarks
 {
@@ -17,12 +18,40 @@ namespace Manta.MsSql.Benchmarks
 
         static void Main(string[] args)
         {
+            TestCase().Wait();
+            return;
             Console.WriteLine("Manta Benchmarks ({0}) {1} batching...", RuntimeInformation.FrameworkDescription, SqlClientSqlCommandSet.IsSqlCommandSetAvailable ? "With" : "Without");
             Console.WriteLine("{0} ({1})", RuntimeInformation.OSDescription, RuntimeInformation.OSArchitecture);
             var streams = GenerateStreams(250000, 10, out var messagesCount);
             store = new MsSqlMessageStore(new MsSqlMessageStoreSettings(connectionString));
             TestMultithreaded(streams, messagesCount).Wait();
             Console.ReadKey();
+        }
+
+        private static async Task TestCase()
+        {
+            var s = new MsSqlMessageStore(new MsSqlMessageStoreSettings(connectionString));
+            var data = GetUncommitedMessages();
+            await s.AppendToStream("abc", ExpectedVersion.NoStream, data).NotOnCapturedContext();
+
+            using (var linearizer = new MsSqlLinearizer(connectionString, new NullLogger(), batchSize: 1))
+            {
+                await linearizer.RunNow();
+            }
+
+            var head = await s.Advanced.ReadHeadMessagePosition().NotOnCapturedContext();
+        }
+
+        private static UncommittedMessages GetUncommitedMessages()
+        {
+            return new UncommittedMessages(
+                Guid.NewGuid(),
+                new[]
+                {
+                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), 1, new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 })
+                });
         }
 
         public static List<UncommittedMessages> GenerateStreams(int streamsCounter, int maxEventsCounter, out int messagesCount)

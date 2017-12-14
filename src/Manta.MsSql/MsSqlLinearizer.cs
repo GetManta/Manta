@@ -15,7 +15,13 @@ namespace Manta.MsSql
 
         private readonly string _connectionString;
 
-        public MsSqlLinearizer(ILogger logger, TimeSpan timeout, TimeSpan workDuration, string connectionString, int batchSize = 5000)
+        public MsSqlLinearizer(string connectionString, ILogger logger, int batchSize = 5000)
+            : this(connectionString, logger, TimeSpan.Zero, TimeSpan.Zero, batchSize)
+        {
+            
+        }
+
+        public MsSqlLinearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan workDuration, int batchSize = 5000)
             : base(logger, timeout, workDuration)
         {
             if (connectionString.IsNullOrEmpty()) throw new ArgumentNullException(nameof(connectionString));
@@ -29,7 +35,7 @@ namespace Manta.MsSql
         private static string PrepareConnectionString(string connectionString)
         {
             if (connectionString.ToLowerInvariant().Contains("enlist")) return connectionString;
-            return connectionString.TrimEnd(';') + "; Enlist = false;";
+            return connectionString.TrimEnd(';') + "; Enlist = false;"; // don't want to enlist
         }
 
         protected override async Task<bool> Linearize(CancellationToken cancellationToken)

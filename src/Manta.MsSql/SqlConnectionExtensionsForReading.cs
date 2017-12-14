@@ -15,7 +15,6 @@ namespace Manta.MsSql
         private const string paramFromVersion = "@FromVersion";
 
         private const string mantaReadStreamForwardCommand = "mantaReadStreamForward";
-
         public static SqlCommand CreateCommandForReadStreamForward(this SqlConnection cnn, string name, int fromVersion)
         {
             var cmd = cnn.CreateCommand();
@@ -42,6 +41,15 @@ namespace Manta.MsSql
                 await reader.GetFieldValueAsync<int>(columnIndexForMessageVersion, cancellationToken).NotOnCapturedContext(),
                 await reader.GetFieldValueAsync<int>(columnIndexForContractId, cancellationToken).NotOnCapturedContext(),
                 await reader.GetFieldValueAsync<byte[]>(columnIndexForPayload, cancellationToken).NotOnCapturedContext());
+        }
+
+        private const string mantaReadHeadMessagePosition = "mantaReadHeadMessagePosition";
+        public static SqlCommand CreateCommandForReadHeadMessagePosition(this SqlConnection cnn)
+        {
+            var cmd = cnn.CreateCommand();
+            cmd.CommandText = mantaReadHeadMessagePosition;
+            cmd.CommandType = CommandType.StoredProcedure;
+            return cmd;
         }
     }
 }

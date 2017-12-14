@@ -15,8 +15,11 @@ namespace Manta
         protected Linearizer(ILogger logger, TimeSpan timeout, TimeSpan workDuration)
         {
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null, Site = null };
-            _timer.Elapsed += (s, e) => Execute().SwallowException();
+            if (timeout != TimeSpan.Zero)
+            {
+                _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null, Site = null };
+                _timer.Elapsed += (s, e) => Execute().SwallowException();
+            }
             WorkDuration = workDuration;
             Timeout = timeout;
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
@@ -34,6 +37,9 @@ namespace Manta
         /// <inheritdoc />
         public void Start()
         {
+            if (_timer == null) return;
+            if (Timeout == TimeSpan.Zero) throw new InvalidOperationException("Set Timeout greater than Zero.");
+
             _startedAt.Set(DateTime.UtcNow);
             if (_isWorking) return;
             _isWorking = true;
@@ -50,7 +56,8 @@ namespace Manta
                 _isWorking = true;
                 while (true)
                 {
-                    if (!(await Linearize(_disposedTokenSource.Token).NotOnCapturedContext())) break;
+                    var shouldDoMoreWork = await Linearize(_disposedTokenSource.Token).NotOnCapturedContext();
+                    if (!shouldDoMoreWork) break;
                 }
             }
             catch (Exception e)
@@ -94,7 +101,8 @@ namespace Manta
                 {
                     while (true)
                     {
-                        if (!(await Linearize(_disposedTokenSource.Token).NotOnCapturedContext())) break;
+                        var shouldDoMoreWork = await Linearize(_disposedTokenSource.Token).NotOnCapturedContext();
+                        if (!shouldDoMoreWork) break;
                     }
                 }
                 catch (Exception e)
@@ -103,7 +111,7 @@ namespace Manta
                 }
                 finally
                 {
-                    _timer.Start();
+                    _timer?.Start();
                 }
             }
         }
