@@ -30,6 +30,9 @@ namespace Manta.MsSql
             BatchSize = batchSize;
         }
 
+        /// <summary>
+        /// Returns batch size for single execution of linearizing.
+        /// </summary>
         public int BatchSize { get; }
 
         private static string PrepareConnectionString(string connectionString)

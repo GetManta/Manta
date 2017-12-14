@@ -18,7 +18,7 @@ namespace Manta
             if (timeout != TimeSpan.Zero)
             {
                 _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null, Site = null };
-                _timer.Elapsed += (s, e) => Execute().SwallowException();
+                _timer.Elapsed += (s, e) => ExecuteOnIntervalElapsed().SwallowException();
             }
             WorkDuration = workDuration;
             Timeout = timeout;
@@ -50,10 +50,16 @@ namespace Manta
         /// <inheritdoc />
         public async Task RunNow()
         {
+            if (_isWorking) return;
+            _isWorking = true;
+            await RunUntilDone().NotOnCapturedContext();
+            _isWorking = false;
+        }
+
+        private async Task RunUntilDone()
+        {
             try
             {
-                if (_isWorking) return;
-                _isWorking = true;
                 while (true)
                 {
                     var shouldDoMoreWork = await Linearize(_disposedTokenSource.Token).NotOnCapturedContext();
@@ -63,10 +69,6 @@ namespace Manta
             catch (Exception e)
             {
                 Logger.Error(e.ToString());
-            }
-            finally
-            {
-                _isWorking = false;
             }
         }
 
@@ -89,7 +91,7 @@ namespace Manta
 
         protected ILogger Logger { get; }
 
-        private async Task Execute()
+        private async Task ExecuteOnIntervalElapsed()
         {
             if (ShouldStop())
             {
@@ -97,22 +99,9 @@ namespace Manta
             }
             else
             {
-                try
-                {
-                    while (true)
-                    {
-                        var shouldDoMoreWork = await Linearize(_disposedTokenSource.Token).NotOnCapturedContext();
-                        if (!shouldDoMoreWork) break;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e.ToString());
-                }
-                finally
-                {
-                    _timer?.Start();
-                }
+                await RunUntilDone().NotOnCapturedContext();
+
+                _timer?.Start();
             }
         }
 

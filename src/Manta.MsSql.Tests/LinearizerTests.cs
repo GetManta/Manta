@@ -11,7 +11,7 @@ namespace Manta.MsSql.Tests
         public LinearizerTests(LocalDbFixture fixture) : base(fixture) { }
 
         [Fact]
-        public async void After_linearization_head_position_is_equal_expected_number()
+        public async void After_linearization_in_small_batches_head_position_should_be_equal_expected_number()
         {
             const byte expected = 3;
             const string streamName = "test-123";
@@ -21,7 +21,7 @@ namespace Manta.MsSql.Tests
 
             using (var linearizer = new MsSqlLinearizer(ConnectionString, new NullLogger(), batchSize: 1))
             {
-                await linearizer.RunNow();
+                await linearizer.RunNow().NotOnCapturedContext();
             }
 
             var head = await store.Advanced.ReadHeadMessagePosition().NotOnCapturedContext();
