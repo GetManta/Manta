@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Manta.MsSql.Tests.Infrastructure;
 using Manta.Sceleton;
 using Xunit;
@@ -19,7 +20,7 @@ namespace Manta.MsSql.Tests
             await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
             var result = await store.ReadStreamForward(streamName, ExpectedVersion.NoStream).NotOnCapturedContext();
-            Assert.Equal(expectedVersion, result.CommittedVersion);
+            Assert.Equal(expectedVersion, result.Messages.Last().Version);
         }
 
         [Fact]
@@ -33,7 +34,7 @@ namespace Manta.MsSql.Tests
             await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
             var result = await store.ReadStreamForward(streamName, 2).NotOnCapturedContext();
-            Assert.Equal(expectedVersion, result.CommittedVersion);
+            Assert.Equal(expectedVersion, result.Messages.Last().Version);
             Assert.Equal(expectedCount, result.Messages.Length);
         }
 
