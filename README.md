@@ -21,7 +21,7 @@ You can download source code from this repository and compile under Visual Studi
  - Support optimistic concurrency
  - Support any kind of message serialization
  - Support any kind of loggers through ILogger interface
- - MS SQL Server persistance implementation (without Linearizer)
+ - MS SQL Server persistance implementation
  - Single-writer pattern for MS SQL Server implementation (Linearizer)
 
 last but not least
@@ -57,7 +57,7 @@ public class SomeEvent
 // Basic example of usage
 
 int contractId = GetContractIdentifierBasedOnEventType(ev.GetType());
-byte[] payload = SerializeEventUsingProtoBuf(ev);
+byte[] payload = SerializeEventUsingProtoBuf(ev); // You can use any type of serialization method
 
 var data = new UncommittedMessages(
     SequentialGuid.NewGuid(), // correlationId
