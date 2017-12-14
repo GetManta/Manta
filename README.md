@@ -21,20 +21,24 @@ You can download source code from this repository and compile under Visual Studi
  - Support optimistic concurrency
  - Support any kind of message serialization
  - Support any kind of loggers through ILogger interface
- - MS SQL Server persistance implementation
- - Single-writer pattern for MS SQL Server implementation (Linearizer)
+ - MS SQL Server persistance implementation (with single-writer pattern for MS SQL Server implementation)
 
 last but not least
 
  - performance - on i5 2500k with SSD benchmarked ~15,000 writes per second and ~30,000 reads per second
 
 ### To be done
- - InMemory implementation
+ - Manta - InMemory implementation
  - Manta.PostgreSql - [PostgreSql](https://www.postgresql.org/) implementation
  - Manta.MySql - [MySql](https://www.mysql.com/) implementation
- - Conflict resolver
- - Support up-conversion of events to the newest version
- - Subscriptions to one or many event stream sources for processmanagers/projections/others (with pluggable stream pollers)
+
+### Other
+ - Manta.Subscriptions
+   - Subscriptions to one or many event stream sources for processmanagers/projections/others
+ - Manta.Domain (as different repository)
+   - Manta.Domain - Conflict resolver
+   - Manta.Domain - Support up-conversion of events to the newest version
+
 
 # Getting started
 
