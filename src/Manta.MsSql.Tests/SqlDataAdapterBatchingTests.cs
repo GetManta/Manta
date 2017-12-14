@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Manta.MsSql.Tests.Infrastructure;
 using Xunit;
+// ReSharper disable PossibleNullReferenceException
 
 namespace Manta.MsSql.Tests
 {

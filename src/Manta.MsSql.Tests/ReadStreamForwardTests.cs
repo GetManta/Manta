@@ -1,12 +1,13 @@
 ﻿using System;
 using Manta.MsSql.Tests.Infrastructure;
+using Manta.Sceleton;
 using Xunit;
 
 namespace Manta.MsSql.Tests
 {
-    public class ReadStreamForward : TestsBase
+    public class ReadStreamForwardTests : TestsBase
     {
-        public ReadStreamForward(LocalDbFixture fixture) : base(fixture) { }
+        public ReadStreamForwardTests(LocalDbFixture fixture) : base(fixture) { }
 
         [Fact]
         public async void Can_read_forward_all_messages()
@@ -15,9 +16,9 @@ namespace Manta.MsSql.Tests
             const string streamName = "test-123";
             var store = await GetMessageStore();
             var data = GetUncommitedMessages();
-            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data);
+            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
-            var result = await store.ReadStreamForward(streamName, ExpectedVersion.NoStream);
+            var result = await store.ReadStreamForward(streamName, ExpectedVersion.NoStream).NotOnCapturedContext();
             Assert.Equal(expectedVersion, result.CommittedVersion);
         }
 
@@ -29,9 +30,9 @@ namespace Manta.MsSql.Tests
             const string streamName = "test-123";
             var store = await GetMessageStore();
             var data = GetUncommitedMessages();
-            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data);
+            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
-            var result = await store.ReadStreamForward(streamName, 2);
+            var result = await store.ReadStreamForward(streamName, 2).NotOnCapturedContext();
             Assert.Equal(expectedVersion, result.CommittedVersion);
             Assert.Equal(expectedCount, result.Messages.Length);
         }
@@ -44,7 +45,7 @@ namespace Manta.MsSql.Tests
             const string streamName = "test-1234";
             var store = await GetMessageStore();
 
-            var result = await store.ReadStreamForward(streamName, expectedVersion);
+            var result = await store.ReadStreamForward(streamName, expectedVersion).NotOnCapturedContext();
             Assert.Equal(expectedCount, result.Messages.Length);
             Assert.True(result.IsStreamNotFound());
         }
