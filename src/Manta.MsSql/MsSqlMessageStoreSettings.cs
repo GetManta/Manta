@@ -5,6 +5,7 @@ namespace Manta.MsSql
     public class MsSqlMessageStoreSettings : MessageStoreSettings
     {
         public MsSqlMessageStoreSettings(string connectionString, bool batching = true)
+            : base(null)
         {
             ConnectionString = connectionString;
             Batching = batching;
@@ -15,7 +16,7 @@ namespace Manta.MsSql
 
         public MsSqlMessageStoreSettings WithLinearizer(TimeSpan timeout, TimeSpan workDuration)
         {
-            Linearizer = new MsSqlLinearizer(Logger, timeout, workDuration, ConnectionString);
+            Linearizer = new MsSqlLinearizer(ConnectionString, Logger, timeout, workDuration);
             return this;
         }
     }

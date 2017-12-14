@@ -15,5 +15,7 @@ namespace Manta
 
         Task<StreamMetadataResult> ReadStreamMetadata(string name, CancellationToken cancellationToken = default(CancellationToken));
         Task SaveStreamMetadata(string name, int expectedVersion, StreamMetadata metadata, CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<long> ReadHeadMessagePosition(CancellationToken cancellationToken = default(CancellationToken));
     }
 }

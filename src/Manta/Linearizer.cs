@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using Manta.Sceleton;
 
 namespace Manta
@@ -10,37 +9,75 @@ namespace Manta
     {
         private CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
         private System.Timers.Timer _timer;
-        private volatile bool _isRunning;
+        private volatile bool _isWorking;
         private readonly InterlockedDateTime _startedAt;
 
         protected Linearizer(ILogger logger, TimeSpan timeout, TimeSpan workDuration)
         {
             Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null, Site = null };
-            _timer.Elapsed += OnTimerElapsed;
+            if (timeout != TimeSpan.Zero)
+            {
+                _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null, Site = null };
+                _timer.Elapsed += (s, e) => ExecuteOnIntervalElapsed().SwallowException();
+            }
             WorkDuration = workDuration;
             Timeout = timeout;
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
         }
 
-        public bool IsRunning => _isRunning;
+        /// <inheritdoc />
+        public bool IsWorking => _isWorking;
+
+        /// <inheritdoc />
         public TimeSpan WorkDuration { get; }
+
+        /// <inheritdoc />
         public TimeSpan Timeout { get; }
 
+        /// <inheritdoc />
         public void Start()
         {
+            if (_timer == null) return;
+            if (Timeout == TimeSpan.Zero) throw new InvalidOperationException("Set Timeout greater than Zero.");
+
             _startedAt.Set(DateTime.UtcNow);
-            if (_isRunning) return;
-            _isRunning = true;
+            if (_isWorking) return;
+            _isWorking = true;
             _timer.Start();
             Logger.Debug("Linearizer for duration {0} minute(s) started.", Math.Round(WorkDuration.TotalMinutes, 2));
         }
 
+        /// <inheritdoc />
+        public async Task RunNow()
+        {
+            if (_isWorking) return;
+            _isWorking = true;
+            await RunUntilDone().NotOnCapturedContext();
+            _isWorking = false;
+        }
+
+        private async Task RunUntilDone()
+        {
+            try
+            {
+                while (true)
+                {
+                    var shouldDoMoreWork = await Linearize(_disposedTokenSource.Token).NotOnCapturedContext();
+                    if (!shouldDoMoreWork) break;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error(e.ToString());
+            }
+        }
+
+        /// <inheritdoc />
         public void Stop()
         {
             if (_timer == null) return;
             _timer.Stop();
-            _isRunning = false;
+            _isWorking = false;
             _startedAt.Set(DateTime.MaxValue);
             Logger.Debug("Linearizer stopped.");
         }
@@ -54,12 +91,7 @@ namespace Manta
 
         protected ILogger Logger { get; }
 
-        private void OnTimerElapsed(object o, ElapsedEventArgs args)
-        {
-            Execute().SwallowException();
-        }
-
-        private async Task Execute()
+        private async Task ExecuteOnIntervalElapsed()
         {
             if (ShouldStop())
             {
@@ -67,27 +99,15 @@ namespace Manta
             }
             else
             {
-                try
-                {
-                    while (true)
-                    {
-                        if (!(await Linearize(_disposedTokenSource.Token).NotOnCapturedContext())) break;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Logger.Error(e.ToString());
-                }
-                finally
-                {
-                    _timer.Start();
-                    _startedAt.Set(DateTime.UtcNow);
-                }
+                await RunUntilDone().NotOnCapturedContext();
+
+                _timer?.Start();
             }
         }
 
         private bool ShouldStop() => (DateTime.UtcNow - _startedAt.Value) > WorkDuration;
 
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(true);

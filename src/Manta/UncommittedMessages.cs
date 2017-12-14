@@ -4,11 +4,11 @@ namespace Manta
 {
     public class UncommittedMessages
     {
-        public UncommittedMessages(Guid correlationId, MessageRecord[] messages, byte[] metadata = null)
+        public UncommittedMessages(Guid correlationId, MessageRecord[] messages, byte[] commitMetadata = null)
         {
             CorrelationId = correlationId;
             Messages = messages;
-            CommitMetadata = metadata;
+            CommitMetadata = commitMetadata;
         }
 
         public Guid CorrelationId { get; }

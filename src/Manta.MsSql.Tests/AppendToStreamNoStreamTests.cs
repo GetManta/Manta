@@ -1,5 +1,6 @@
 ﻿using System;
 using Manta.MsSql.Tests.Infrastructure;
+using Manta.Sceleton;
 using Xunit;
 // ReSharper disable PossibleNullReferenceException
 
@@ -16,7 +17,7 @@ namespace Manta.MsSql.Tests
             const string streamName = "test-123";
             var data = GetUncommitedMessages();
 
-            var exception = await Record.ExceptionAsync(() => store.AppendToStream(streamName, ExpectedVersion.NoStream, data));
+            var exception = await Record.ExceptionAsync(async () => await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext());
 
             Assert.Null(exception);
         }
@@ -27,11 +28,11 @@ namespace Manta.MsSql.Tests
             var store = await GetMessageStore();
             const string streamName = "test-123";
             var data = GetUncommitedMessages();
-            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data);
+            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
             data = GetUncommitedMessages();
 
-            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () => await store.AppendToStream(streamName, ExpectedVersion.NoStream, data));
+            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () => await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext());
         }
 
         [Fact]
@@ -43,7 +44,7 @@ namespace Manta.MsSql.Tests
 
             await store.AppendToStream(streamName, ExpectedVersion.NoStream, data);
 
-            var exception = await Record.ExceptionAsync(() => store.AppendToStream(streamName, ExpectedVersion.NoStream, data));
+            var exception = await Record.ExceptionAsync(async () => await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext());
 
             Assert.Null(exception);
         }

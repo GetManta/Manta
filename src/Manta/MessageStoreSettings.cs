@@ -5,9 +5,9 @@ namespace Manta
 {
     public abstract class MessageStoreSettings
     {
-        protected MessageStoreSettings()
+        protected MessageStoreSettings(ILogger logger)
         {
-            Logger = new NullLogger();
+            Logger = logger ?? new NullLogger();
         }
 
         public ILogger Logger { get; protected set; }

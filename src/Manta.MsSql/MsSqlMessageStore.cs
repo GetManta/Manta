@@ -16,6 +16,7 @@ namespace Manta.MsSql
         {
             _settings = settings;
             CheckForBatchingAvailability();
+            Advanced = new MsSqlMessageStoreAdvanced(_settings);
         }
 
         private void CheckForBatchingAvailability()
@@ -238,9 +239,6 @@ namespace Manta.MsSql
             }
         }
 
-        public IMessageStoreAdvanced Advanced
-        {
-            get { throw new NotImplementedException(); }
-        }
+        public IMessageStoreAdvanced Advanced { get; }
     }
 }
