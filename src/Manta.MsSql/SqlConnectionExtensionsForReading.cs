@@ -13,8 +13,13 @@ namespace Manta.MsSql
 
         private const string paramStreamName = "@StreamName";
         private const string paramFromVersion = "@FromVersion";
+        private const string paramMessageVersion = "@MessageVersion";
 
         private const string mantaReadStreamForwardCommand = "mantaReadStreamForward";
+        private const string mantaReadHeadMessagePosition = "mantaReadHeadMessagePosition";
+        private const string mantaReadMessageCommand = "mantaReadMessage";
+
+
         public static SqlCommand CreateCommandForReadStreamForward(this SqlConnection cnn, string name, int fromVersion)
         {
             var cmd = cnn.CreateCommand();
@@ -25,6 +30,28 @@ namespace Manta.MsSql
             p.Value = name;
             p = cmd.Parameters.Add(paramFromVersion, SqlDbType.Int);
             p.Value = fromVersion;
+
+            return cmd;
+        }
+
+        public static SqlCommand CreateCommandForReadHeadMessagePosition(this SqlConnection cnn)
+        {
+            var cmd = cnn.CreateCommand();
+            cmd.CommandText = mantaReadHeadMessagePosition;
+            cmd.CommandType = CommandType.StoredProcedure;
+            return cmd;
+        }
+
+        public static SqlCommand CreateCommandForReadMessage(this SqlConnection cnn, string name, int messageVersion)
+        {
+            var cmd = cnn.CreateCommand();
+            cmd.CommandText = mantaReadMessageCommand;
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, defaultStreamNameLength);
+            p.Value = name;
+            p = cmd.Parameters.Add(paramMessageVersion, SqlDbType.Int);
+            p.Value = messageVersion;
 
             return cmd;
         }
@@ -41,15 +68,6 @@ namespace Manta.MsSql
                 await reader.GetFieldValueAsync<int>(columnIndexForMessageVersion, cancellationToken).NotOnCapturedContext(),
                 await reader.GetFieldValueAsync<int>(columnIndexForContractId, cancellationToken).NotOnCapturedContext(),
                 await reader.GetFieldValueAsync<byte[]>(columnIndexForPayload, cancellationToken).NotOnCapturedContext());
-        }
-
-        private const string mantaReadHeadMessagePosition = "mantaReadHeadMessagePosition";
-        public static SqlCommand CreateCommandForReadHeadMessagePosition(this SqlConnection cnn)
-        {
-            var cmd = cnn.CreateCommand();
-            cmd.CommandText = mantaReadHeadMessagePosition;
-            cmd.CommandType = CommandType.StoredProcedure;
-            return cmd;
         }
     }
 }

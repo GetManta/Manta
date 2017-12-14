@@ -166,6 +166,28 @@ BEGIN
 END;
 GO
 
+CREATE PROCEDURE [dbo].[mantaReadMessage]
+(
+    @StreamName VARCHAR(512),
+    @MessageVersion INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP 1
+        s.[MessageId],
+        s.[MessageVersion],
+        s.[ContractId],
+        s.[Payload]
+    FROM
+        [Streams] s WITH(READPAST,ROWLOCK)
+    WHERE
+        s.[Name] = @StreamName
+        AND s.[MessageVersion] = @MessageVersion
+END;
+GO
+
 CREATE PROCEDURE [dbo].[mantaLinearizeStreams]
 (
     @BatchSize INT
