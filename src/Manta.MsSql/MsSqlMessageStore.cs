@@ -8,6 +8,7 @@ using Manta.Sceleton;
 
 namespace Manta.MsSql
 {
+    /// <inheritdoc />
     public class MsSqlMessageStore : IMessageStore
     {
         private readonly MsSqlMessageStoreSettings _settings;
@@ -27,15 +28,16 @@ namespace Manta.MsSql
             }
         }
 
-        public async Task<RecordedStream> ReadStreamForward(string stream, int fromVersion, CancellationToken cancellationToken = default(CancellationToken))
+        /// <inheritdoc />
+        public async Task<RecordedStream> ReadStreamForward(string stream, int fromVersion, CancellationToken token = default(CancellationToken))
         {
             _settings.Logger.Trace("Reading stream '{0}' forward from version {1}...", stream, fromVersion);
 
             using (var connection = new SqlConnection(_settings.ConnectionString))
             using (var cmd = connection.CreateCommandForReadStreamForward(stream, fromVersion))
             {
-                await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
-                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, cancellationToken).NotOnCapturedContext())
+                await connection.OpenAsync(token).NotOnCapturedContext();
+                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, token).NotOnCapturedContext())
                 {
                     if (!reader.HasRows)
                     {
@@ -44,9 +46,9 @@ namespace Manta.MsSql
                     }
 
                     var messages = new List<RecordedMessage>(20); // 20? How many will be enough?
-                    while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
+                    while (await reader.ReadAsync(token).NotOnCapturedContext())
                     {
-                        messages.Add(await reader.GetRecordedMessage(cancellationToken).NotOnCapturedContext());
+                        messages.Add(await reader.GetRecordedMessage(token).NotOnCapturedContext());
                     }
                     _settings.Logger.Trace("Read {0} messages for '{1}' stream from version {2}.", messages.Count, stream, fromVersion);
                     return new RecordedStream(messages.ToArray());
@@ -54,7 +56,8 @@ namespace Manta.MsSql
             }
         }
 
-        public async Task AppendToStream(string stream, int expectedVersion, UncommittedMessages data, CancellationToken cancellationToken = default(CancellationToken))
+        /// <inheritdoc />
+        public async Task AppendToStream(string stream, int expectedVersion, UncommittedMessages data, CancellationToken token = default(CancellationToken))
         {
             if (stream.IsNullOrEmpty()) throw new ArgumentNullException(nameof(stream));
             if (expectedVersion < ExpectedVersion.Any) throw new ArgumentException("Expected version must be greater or equal 1, or 'Any', or 'NoStream'.", nameof(expectedVersion));
@@ -66,15 +69,15 @@ namespace Manta.MsSql
                 {
                     default:
                         _settings.Logger.Trace("Appending {0} messages to stream '{1}' with expected version {2}...", data.Messages.Length, stream, expectedVersion);
-                        await AppendToStreamWithExpectedVersion(stream, expectedVersion, data, cancellationToken).NotOnCapturedContext();
+                        await AppendToStreamWithExpectedVersion(stream, expectedVersion, data, token).NotOnCapturedContext();
                         break;
                     case ExpectedVersion.Any:
                         _settings.Logger.Trace("Appending {0} messages to stream '{1}' with any version...", data.Messages.Length, stream);
-                        await AppendToStreamWithAnyVersion(stream, data, cancellationToken).NotOnCapturedContext();
+                        await AppendToStreamWithAnyVersion(stream, data, token).NotOnCapturedContext();
                         break;
                     case ExpectedVersion.NoStream:
                         _settings.Logger.Trace("Appending {0} messages to stream '{1}' where stream not existed yet...", data.Messages.Length, stream);
-                        await AppendToStreamWithExpectedVersion(stream, ExpectedVersion.NoStream, data, cancellationToken).NotOnCapturedContext();
+                        await AppendToStreamWithExpectedVersion(stream, ExpectedVersion.NoStream, data, token).NotOnCapturedContext();
                         break;
                 }
 
@@ -90,7 +93,7 @@ namespace Manta.MsSql
             }
         }
 
-        private async Task AppendToStreamWithExpectedVersion(string stream, int expectedVersion, UncommittedMessages data, CancellationToken cancellationToken)
+        private async Task AppendToStreamWithExpectedVersion(string stream, int expectedVersion, UncommittedMessages data, CancellationToken token)
         {
             if (SqlClientSqlCommandSet.IsSqlCommandSetAvailable && _settings.Batching && data.Messages.Length > 1)
             {
@@ -109,13 +112,13 @@ namespace Manta.MsSql
                         batch.Append(cmd);
                     }
 
-                    await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
+                    await connection.OpenAsync(token).NotOnCapturedContext();
                     using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                     {
                         try
                         {
                             batch.Transaction = tran;
-                            await batch.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+                            await batch.ExecuteNonQueryAsync(token).NotOnCapturedContext();
                             tran.Commit();
                         }
                         catch (SqlException e)
@@ -135,7 +138,7 @@ namespace Manta.MsSql
             {
                 using (var connection = new SqlConnection(_settings.ConnectionString))
                 {
-                    await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
+                    await connection.OpenAsync(token).NotOnCapturedContext();
                     using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                     {
                         try
@@ -149,7 +152,7 @@ namespace Manta.MsSql
                                     : connection.CreateCommandToAppendingWithExpectedVersion(stream, data, msg, messageVersion))
                                 {
                                     cmd.Transaction = tran;
-                                    await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+                                    await cmd.ExecuteNonQueryAsync(token).NotOnCapturedContext();
                                 }
                             }
                             tran.Commit();
@@ -169,7 +172,7 @@ namespace Manta.MsSql
             }
         }
 
-        private async Task AppendToStreamWithAnyVersion(string stream, UncommittedMessages data, CancellationToken cancellationToken)
+        private async Task AppendToStreamWithAnyVersion(string stream, UncommittedMessages data, CancellationToken token)
         {
             _settings.Logger.Trace("Appending {0} messages to stream '{1}' with any version...", data.Messages.Length, stream);
 
@@ -183,13 +186,13 @@ namespace Manta.MsSql
                         batch.Append(connection.CreateCommandToAppendingWithAnyVersion(stream, data, msg));
                     }
 
-                    await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
+                    await connection.OpenAsync(token).NotOnCapturedContext();
                     using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                     {
                         try
                         {
                             batch.Transaction = tran;
-                            await batch.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+                            await batch.ExecuteNonQueryAsync(token).NotOnCapturedContext();
                             tran.Commit();
                         }
                         catch (SqlException e)
@@ -209,7 +212,7 @@ namespace Manta.MsSql
             {
                 using (var connection = new SqlConnection(_settings.ConnectionString))
                 {
-                    await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
+                    await connection.OpenAsync(token).NotOnCapturedContext();
                     using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                     {
                         try
@@ -219,7 +222,7 @@ namespace Manta.MsSql
                                 using (var cmd = connection.CreateCommandToAppendingWithAnyVersion(stream, data, msg))
                                 {
                                     cmd.Transaction = tran;
-                                    await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+                                    await cmd.ExecuteNonQueryAsync(token).NotOnCapturedContext();
                                 }
                             }
                             tran.Commit();
@@ -239,6 +242,7 @@ namespace Manta.MsSql
             }
         }
 
+        /// <inheritdoc />
         public IMessageStoreAdvanced Advanced { get; }
     }
 }

@@ -7,6 +7,7 @@ using Manta.Sceleton;
 
 namespace Manta.MsSql
 {
+    /// <inheritdoc />
     public class MsSqlMessageStoreAdvanced : IMessageStoreAdvanced
     {
         private readonly MsSqlMessageStoreSettings _settings;
@@ -16,21 +17,25 @@ namespace Manta.MsSql
             _settings = settings;
         }
 
+        /// <inheritdoc />
         public Task TruncateStream(string stream, int toVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public Task TruncateStream(string stream, DateTime toCreationDate, CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public Task DeleteStream(string stream, int expectedVersion, bool hardDelete, CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public async Task<RecordedMessage?> ReadMessage(string stream, int messageVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (messageVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Message version should be greater or equal 1.");
@@ -56,26 +61,31 @@ namespace Manta.MsSql
             }
         }
 
+        /// <inheritdoc />
         public Task<MessageRecord> ReadSnapshot(string stream, CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public Task SaveSnapshot(string stream, MessageRecord snapshot, CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public Task<StreamMetadataResult> ReadStreamMetadata(string stream, CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public Task SaveStreamMetadata(string stream, int expectedVersion, StreamMetadata metadata, CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
         public async Task<long> ReadHeadMessagePosition(CancellationToken cancellationToken = default(CancellationToken))
         {
             _settings.Logger.Trace("Reading head message position...");
