@@ -13,13 +13,16 @@ namespace Manta.MsSql.Tests
         [Fact]
         public async void After_linearization_in_small_batches_head_position_should_be_equal_expected_number()
         {
-            const byte expected = 3;
-            const string streamName = "test-123";
+            const byte expected = 18;
+            const string streamName1 = "test-123";
+            const string streamName2 = "test-456";
             var store = await GetMessageStore();
             var data = GetUncommitedMessages();
-            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext();
+            await store.AppendToStream(streamName1, ExpectedVersion.NoStream, data).NotOnCapturedContext();
+            data = GetUncommitedMessages();
+            await store.AppendToStream(streamName2, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
-            using (var linearizer = new MsSqlLinearizer(ConnectionString, new NullLogger(), batchSize: 1))
+            using (var linearizer = new MsSqlLinearizer(ConnectionString, new NullLogger(), batchSize: 4))
             {
                 await linearizer.RunNow().NotOnCapturedContext();
             }
@@ -35,6 +38,12 @@ namespace Manta.MsSql.Tests
                 Guid.NewGuid(),
                 new[]
                 {
+                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), 1, new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), 1, new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 }),
                     new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 }),
                     new MessageRecord(Guid.NewGuid(), 1, new byte[]{ 1, 2, 3 }),
                     new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 })
