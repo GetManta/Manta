@@ -224,3 +224,21 @@ BEGIN
     SELECT TOP(1) [MaxMessagePosition] FROM [StreamsStats] WITH (NOLOCK) WHERE [InternalId] = 1
 END;
 GO
+
+CREATE PROCEDURE [dbo].[mantaHardDeleteStream]
+(
+    @StreamName VARCHAR(512),
+    @ExpectedVersion INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DELETE FROM [Streams] WHERE [Name] = @StreamName AND
+        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = @StreamName ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+
+    IF @@ROWCOUNT = 0 BEGIN
+        RAISERROR('WrongExpectedVersion',16,1);
+    END
+END;
+GO

@@ -41,10 +41,9 @@ namespace Manta
         /// </remarks>
         /// <param name="stream">Name of the stream</param>
         /// <param name="expectedVersion">Expected version of the stream</param>
-        /// <param name="hardDelete">If <c>true</c> then status about deletion this stream will be unavailable</param>
         /// <param name="token">Cancelation token</param>
         /// <returns></returns>
-        Task DeleteStream(string stream, int expectedVersion, bool hardDelete, CancellationToken token = default(CancellationToken));
+        Task DeleteStream(string stream, int expectedVersion, CancellationToken token = default(CancellationToken));
 
         /// <summary>
         /// 

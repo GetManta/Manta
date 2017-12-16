@@ -30,9 +30,19 @@ namespace Manta.MsSql
         }
 
         /// <inheritdoc />
-        public Task DeleteStream(string stream, int expectedVersion, bool hardDelete, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task DeleteStream(string stream, int expectedVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
-            throw new NotImplementedException();
+            if (expectedVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Expected version should be greater or equal 1.");
+
+            _settings.Logger.Trace("Deleting stream {0} with expected version {1}...", stream, expectedVersion);
+
+            using (var connection = new SqlConnection(_settings.ConnectionString))
+            using (var cmd = connection.CreateCommandForHardDeletingStream(stream, expectedVersion))
+            {
+                await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
+                await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+            }
+            _settings.Logger.Trace("Stream {0} with expected version {1} deleted.", stream, expectedVersion);
         }
 
         /// <inheritdoc />
