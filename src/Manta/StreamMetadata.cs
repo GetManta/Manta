@@ -3,15 +3,15 @@
 namespace Manta
 {
     /// <summary>
-    /// A struct representing stream metadata
+    /// A struct representing uncommited stream metadata
     /// </summary>
     public struct StreamMetadata
     {
-        public StreamMetadata(int? maxCount, TimeSpan? maxAge, byte[] payload)
+        public StreamMetadata(int? maxCount, TimeSpan? maxAge, byte[] customPayload)
         {
             MaxCount = maxCount;
             MaxAge = maxAge;
-            Payload = payload;
+            CustomPayload = customPayload;
         }
 
         /// <summary>
@@ -27,6 +27,6 @@ namespace Manta
         /// <summary>
         /// Custom metadata payload
         /// </summary>
-        public byte[] Payload { get; }
+        public byte[] CustomPayload { get; }
     }
 }

@@ -166,6 +166,28 @@ BEGIN
 END;
 GO
 
+CREATE PROCEDURE [dbo].[mantaReadMessage]
+(
+    @StreamName VARCHAR(512),
+    @MessageVersion INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP 1
+        s.[MessageId],
+        s.[MessageVersion],
+        s.[ContractId],
+        s.[Payload]
+    FROM
+        [Streams] s WITH(READPAST,ROWLOCK)
+    WHERE
+        s.[Name] = @StreamName
+        AND s.[MessageVersion] = @MessageVersion
+END;
+GO
+
 CREATE PROCEDURE [dbo].[mantaLinearizeStreams]
 (
     @BatchSize INT
@@ -200,5 +222,23 @@ AS
 BEGIN
     SET NOCOUNT ON;
     SELECT TOP(1) [MaxMessagePosition] FROM [StreamsStats] WITH (NOLOCK) WHERE [InternalId] = 1
+END;
+GO
+
+CREATE PROCEDURE [dbo].[mantaHardDeleteStream]
+(
+    @StreamName VARCHAR(512),
+    @ExpectedVersion INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DELETE FROM [Streams] WHERE [Name] = @StreamName AND
+        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = @StreamName ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+
+    IF @@ROWCOUNT = 0 BEGIN
+        RAISERROR('WrongExpectedVersion',16,1);
+    END
 END;
 GO
