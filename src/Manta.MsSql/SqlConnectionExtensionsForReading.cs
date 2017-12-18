@@ -9,8 +9,6 @@ namespace Manta.MsSql
 {
     internal static class SqlConnectionExtensionsForReading
     {
-        private const short defaultStreamNameLength = 512;
-
         private const string paramStreamName = "@StreamName";
         private const string paramFromVersion = "@FromVersion";
         private const string paramMessageVersion = "@MessageVersion";
@@ -26,7 +24,7 @@ namespace Manta.MsSql
             cmd.CommandText = mantaReadStreamForwardCommand;
             cmd.CommandType = CommandType.StoredProcedure;
 
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, defaultStreamNameLength);
+            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
             p.Value = name;
             p = cmd.Parameters.Add(paramFromVersion, SqlDbType.Int);
             p.Value = fromVersion;
@@ -48,7 +46,7 @@ namespace Manta.MsSql
             cmd.CommandText = mantaReadMessageCommand;
             cmd.CommandType = CommandType.StoredProcedure;
 
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, defaultStreamNameLength);
+            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
             p.Value = name;
             p = cmd.Parameters.Add(paramMessageVersion, SqlDbType.Int);
             p.Value = messageVersion;

@@ -18,15 +18,37 @@ namespace Manta.MsSql
         }
 
         /// <inheritdoc />
-        public Task TruncateStream(string stream, int toVersion, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task TruncateStream(string stream, int expectedVersion, int toVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
-            throw new NotImplementedException();
+            if (expectedVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Expected version should be greater or equal 1.");
+            if (toVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Version to truncate should be greater than 1.");
+            if (toVersion >= expectedVersion) throw new InvalidOperationException($"Version to truncate {toVersion} must be lower than expected version {expectedVersion}.");
+
+            _settings.Logger.Trace("Truncate stream {0} to version {1}...", stream, toVersion);
+
+            using (var connection = new SqlConnection(_settings.ConnectionString))
+            using (var cmd = connection.CreateCommandForTruncateStreamToVersion(stream, expectedVersion, toVersion))
+            {
+                await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
+                await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+            }
+            _settings.Logger.Trace("Stream {0} truncated to version {1}.", stream, toVersion);
         }
 
         /// <inheritdoc />
-        public Task TruncateStream(string stream, DateTime toCreationDate, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task TruncateStream(string stream, int expectedVersion, DateTime toCreationDate, CancellationToken cancellationToken = default(CancellationToken))
         {
-            throw new NotImplementedException();
+            if (expectedVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Expected version should be greater or equal 1.");
+
+            _settings.Logger.Trace("Truncate stream {0} to {1}...", stream, expectedVersion, toCreationDate);
+
+            using (var connection = new SqlConnection(_settings.ConnectionString))
+            using (var cmd = connection.CreateCommandForTruncateStreamToCreationDate(stream, expectedVersion, toCreationDate))
+            {
+                await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
+                await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+            }
+            _settings.Logger.Trace("Stream {0} truncated to {1}.", stream, toCreationDate);
         }
 
         /// <inheritdoc />

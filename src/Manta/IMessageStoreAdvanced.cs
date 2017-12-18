@@ -16,10 +16,11 @@ namespace Manta
         /// Use it wisely. Truncating can dramatically decrease database performance.
         /// </remarks>
         /// <param name="stream">Name of the stream</param>
+        /// <param name="expectedVersion">Expected version of the stream before deleting</param>
         /// <param name="toVersion">Message version</param>
         /// <param name="token">Cancelation token</param>
         /// <returns></returns>
-        Task TruncateStream(string stream, int toVersion, CancellationToken token = default(CancellationToken));
+        Task TruncateStream(string stream, int expectedVersion, int toVersion, CancellationToken token = default(CancellationToken));
 
         /// <summary>
         /// Truncates the stream up to specified creation (UTC) date.
@@ -28,10 +29,11 @@ namespace Manta
         /// Use it wisely. Truncating can dramatically decrease database performance.
         /// </remarks>
         /// <param name="stream">Name of the stream</param>
-        /// <param name="toCreationDate">Creation date (UTC)</param>
+        /// <param name="expectedVersion">Expected version of the stream before deleting</param>
+        /// <param name="toCreationDate">Creation date (UTC) of message</param>
         /// <param name="token">Cancelation token</param>
         /// <returns></returns>
-        Task TruncateStream(string stream, DateTime toCreationDate, CancellationToken token = default(CancellationToken));
+        Task TruncateStream(string stream, int expectedVersion, DateTime toCreationDate, CancellationToken token = default(CancellationToken));
 
         /// <summary>
         /// Deletes the stream with specified message version.
@@ -40,7 +42,7 @@ namespace Manta
         /// Use it wisely. Deleting can dramatically decrease database performance.
         /// </remarks>
         /// <param name="stream">Name of the stream</param>
-        /// <param name="expectedVersion">Expected version of the stream</param>
+        /// <param name="expectedVersion">Expected version of the stream before deleting</param>
         /// <param name="token">Cancelation token</param>
         /// <returns></returns>
         Task DeleteStream(string stream, int expectedVersion, CancellationToken token = default(CancellationToken));
