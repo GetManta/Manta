@@ -29,13 +29,13 @@ last but not least
 
 ### To be done
  - Manta - InMemory implementation
+  - Manta.Subscriptions
+    - Subscriptions to one or many event stream sources for processmanagers/projections/others
+
+### More to be done
  - Manta.PostgreSql - [PostgreSql](https://www.postgresql.org/) implementation
  - Manta.MySql - [MySql](https://www.mysql.com/) implementation
-
-### Other
- - Manta.Subscriptions
-   - Subscriptions to one or many event stream sources for processmanagers/projections/others
- - Manta.Domain (as different repository)
+ - Manta.Domain (as different github repository)
    - Manta.Domain - Conflict resolver
    - Manta.Domain - Support up-conversion of events to the newest version
 
