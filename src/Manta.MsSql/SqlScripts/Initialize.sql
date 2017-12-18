@@ -240,3 +240,41 @@ BEGIN
     END
 END;
 GO
+
+CREATE PROCEDURE [dbo].[mantaTruncateStreamToVersion]
+(
+    @StreamName VARCHAR(512),
+    @ExpectedVersion INT,
+    @ToVersion INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DELETE FROM [Streams] WHERE [Name] = @StreamName AND [MessageVersion] <= @ToVersion AND
+        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = @StreamName ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+
+    IF @@ROWCOUNT = 0 BEGIN
+        RAISERROR('WrongExpectedVersion',16,1);
+    END
+END;
+GO
+
+CREATE PROCEDURE [dbo].[mantaTruncateStreamToCreationDate]
+(
+    @StreamName VARCHAR(512),
+    @ExpectedVersion INT,
+    @ToCreationDate datetime2(3)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DELETE FROM [Streams] WHERE [Name] = @StreamName AND [Timestamp] <= @ToCreationDate AND
+        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = @StreamName AND [Timestamp] <= @ToCreationDate ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+
+    IF @@ROWCOUNT = 0 BEGIN
+        RAISERROR('WrongExpectedVersion',16,1);
+    END
+END;
+GO

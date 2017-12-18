@@ -5,8 +5,6 @@ namespace Manta.MsSql
 {
     internal static class SqlConnectionExtensionsForAppending
     {
-        private const short defaultStreamNameLength = 512;
-
         private const string paramStreamName = "@StreamName";
         private const string paramCorrelationId = "@CorrelationId";
         private const string paramContractId = "@ContractId";
@@ -22,7 +20,7 @@ namespace Manta.MsSql
             cmd.CommandText = mantaAppendAnyVersionCommand;
             cmd.CommandType = CommandType.StoredProcedure;
 
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, defaultStreamNameLength);
+            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
             p.Value = name;
             p = cmd.Parameters.Add(paramCorrelationId, SqlDbType.UniqueIdentifier);
             p.Value = data.CorrelationId;
@@ -44,7 +42,7 @@ namespace Manta.MsSql
             cmd.CommandText = mantaAppendExpectedVersionCommand;
             cmd.CommandType = CommandType.StoredProcedure;
 
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, defaultStreamNameLength);
+            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
             p.Value = name;
             p = cmd.Parameters.Add(paramCorrelationId, SqlDbType.UniqueIdentifier);
             p.Value = data.CorrelationId;
@@ -68,7 +66,7 @@ namespace Manta.MsSql
             cmd.CommandText = mantaAppendNoStreamCommand;
             cmd.CommandType = CommandType.StoredProcedure;
 
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, defaultStreamNameLength);
+            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
             p.Value = name;
             p = cmd.Parameters.Add(paramCorrelationId, SqlDbType.UniqueIdentifier);
             p.Value = data.CorrelationId;
