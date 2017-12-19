@@ -58,7 +58,7 @@ namespace Manta.MsSql
                 var result = await cmd.ExecuteScalarAsync(cancellationToken)
                     .NotOnCapturedContext();
 
-                return result != DBNull.Value && (bool)result; // null should never happen
+                return result != null && result != DBNull.Value && (bool)result;
             }
         }
     }
