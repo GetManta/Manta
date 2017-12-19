@@ -1,5 +1,8 @@
-﻿namespace Manta
+﻿using System.Runtime.InteropServices;
+
+namespace Manta
 {
+    [StructLayout(LayoutKind.Sequential)]
     public struct RecordedStream
     {
         public RecordedStream(RecordedMessage[] messages)

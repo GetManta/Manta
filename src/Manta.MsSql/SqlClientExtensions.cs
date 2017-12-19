@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace Manta.MsSql
@@ -20,6 +21,23 @@ namespace Manta.MsSql
         public static bool IsWrongExpectedVersionRised(this SqlException e)
         {
             return e.Message.StartsWith(wrongExpectedVersionKey, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static SqlCommand CreateCommand(this SqlConnection cnn, string commandText, int? commandTimeout = null)
+        {
+            var cmd = cnn.CreateCommand();
+            cmd.CommandText = commandText;
+            cmd.CommandType = CommandType.StoredProcedure;
+            if (commandTimeout != null) cmd.CommandTimeout = commandTimeout.Value;
+            return cmd;
+        }
+
+        public static SqlCommand AddInputParam(this SqlCommand cmd, string name, SqlDbType type, object value, int? size = null)
+        {
+            var p = cmd.Parameters.Add(name, type);
+            if (size != null) p.Size = size.Value;
+            p.Value = value;
+            return cmd;
         }
     }
 }
