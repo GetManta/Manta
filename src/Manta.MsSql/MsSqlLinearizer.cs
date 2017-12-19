@@ -9,7 +9,7 @@ namespace Manta.MsSql
 {
     public class MsSqlLinearizer : Linearizer
     {
-        private const int defaultCommandTimeout = 120000;
+        private const int defaultCommandTimeoutInSeconds = 120;
         private const string paramBatchSize = "@BatchSize";
         private const string mantaLinearizeStreamsCommand = "mantaLinearizeStreams";
 
@@ -46,11 +46,8 @@ namespace Manta.MsSql
             if (_connectionString == null) return false;
 
             using (var cnn = new SqlConnection(_connectionString))
-            using (var cmd = cnn.CreateCommand())
+            using (var cmd = cnn.CreateCommand(mantaLinearizeStreamsCommand, defaultCommandTimeoutInSeconds))
             {
-                cmd.CommandText = mantaLinearizeStreamsCommand;
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandTimeout = defaultCommandTimeout;
                 var p = cmd.Parameters.Add(paramBatchSize, SqlDbType.Int);
                 p.Value = BatchSize;
 

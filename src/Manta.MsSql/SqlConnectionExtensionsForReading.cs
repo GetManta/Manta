@@ -20,38 +20,23 @@ namespace Manta.MsSql
 
         public static SqlCommand CreateCommandForReadStreamForward(this SqlConnection cnn, string name, int fromVersion)
         {
-            var cmd = cnn.CreateCommand();
-            cmd.CommandText = mantaReadStreamForwardCommand;
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
-            p.Value = name;
-            p = cmd.Parameters.Add(paramFromVersion, SqlDbType.Int);
-            p.Value = fromVersion;
-
-            return cmd;
+            return cnn
+                .CreateCommand(mantaReadStreamForwardCommand)
+                .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
+                .AddInputParam(paramFromVersion, SqlDbType.Int, fromVersion);
         }
 
         public static SqlCommand CreateCommandForReadHeadMessagePosition(this SqlConnection cnn)
         {
-            var cmd = cnn.CreateCommand();
-            cmd.CommandText = mantaReadHeadMessagePosition;
-            cmd.CommandType = CommandType.StoredProcedure;
-            return cmd;
+            return cnn.CreateCommand(mantaReadHeadMessagePosition);
         }
 
         public static SqlCommand CreateCommandForReadMessage(this SqlConnection cnn, string name, int messageVersion)
         {
-            var cmd = cnn.CreateCommand();
-            cmd.CommandText = mantaReadMessageCommand;
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
-            p.Value = name;
-            p = cmd.Parameters.Add(paramMessageVersion, SqlDbType.Int);
-            p.Value = messageVersion;
-
-            return cmd;
+            return cnn
+                .CreateCommand(mantaReadMessageCommand)
+                .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
+                .AddInputParam(paramMessageVersion, SqlDbType.Int, messageVersion);
         }
 
         private const byte columnIndexForMessageId = 0;

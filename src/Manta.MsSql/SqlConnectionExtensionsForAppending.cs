@@ -13,71 +13,41 @@ namespace Manta.MsSql
         private const string paramPayload = "@Payload";
 
         private const string mantaAppendAnyVersionCommand = "mantaAppendAnyVersion";
+        private const string mantaAppendExpectedVersionCommand = "mantaAppendExpectedVersion";
+        private const string mantaAppendNoStreamCommand = "mantaAppendNoStream";
 
         public static SqlCommand CreateCommandToAppendingWithAnyVersion(this SqlConnection cnn, string name, UncommittedMessages data, MessageRecord msg)
         {
-            var cmd = cnn.CreateCommand();
-            cmd.CommandText = mantaAppendAnyVersionCommand;
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
-            p.Value = name;
-            p = cmd.Parameters.Add(paramCorrelationId, SqlDbType.UniqueIdentifier);
-            p.Value = data.CorrelationId;
-            p = cmd.Parameters.Add(paramContractId, SqlDbType.Int);
-            p.Value = msg.ContractId;
-            p = cmd.Parameters.Add(paramMessageId, SqlDbType.UniqueIdentifier);
-            p.Value = msg.MessageId;
-            p = cmd.Parameters.Add(paramPayload, SqlDbType.VarBinary);
-            p.Value = msg.Payload;
-
-            return cmd;
+            return cnn
+                .CreateCommand(mantaAppendAnyVersionCommand)
+                .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
+                .AddInputParam(paramCorrelationId, SqlDbType.UniqueIdentifier, data.CorrelationId)
+                .AddInputParam(paramContractId, SqlDbType.Int, msg.ContractId)
+                .AddInputParam(paramMessageId, SqlDbType.UniqueIdentifier, msg.MessageId)
+                .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload);
         }
-
-        private const string mantaAppendExpectedVersionCommand = "mantaAppendExpectedVersion";
 
         public static SqlCommand CreateCommandToAppendingWithExpectedVersion(this SqlConnection cnn, string name, UncommittedMessages data, MessageRecord msg, int messageVersion)
         {
-            var cmd = cnn.CreateCommand();
-            cmd.CommandText = mantaAppendExpectedVersionCommand;
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
-            p.Value = name;
-            p = cmd.Parameters.Add(paramCorrelationId, SqlDbType.UniqueIdentifier);
-            p.Value = data.CorrelationId;
-            p = cmd.Parameters.Add(paramContractId, SqlDbType.Int);
-            p.Value = msg.ContractId;
-            p = cmd.Parameters.Add(paramMessageId, SqlDbType.UniqueIdentifier);
-            p.Value = msg.MessageId;
-            p = cmd.Parameters.Add(paramMessageVersion, SqlDbType.Int);
-            p.Value = messageVersion;
-            p = cmd.Parameters.Add(paramPayload, SqlDbType.VarBinary);
-            p.Value = msg.Payload;
-
-            return cmd;
+            return cnn
+                .CreateCommand(mantaAppendExpectedVersionCommand)
+                .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
+                .AddInputParam(paramCorrelationId, SqlDbType.UniqueIdentifier, data.CorrelationId)
+                .AddInputParam(paramContractId, SqlDbType.Int, msg.ContractId)
+                .AddInputParam(paramMessageId, SqlDbType.UniqueIdentifier, msg.MessageId)
+                .AddInputParam(paramMessageVersion, SqlDbType.Int, messageVersion)
+                .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload);
         }
-
-        private const string mantaAppendNoStreamCommand = "mantaAppendNoStream";
 
         public static SqlCommand CreateCommandToAppendingWithNoStream(this SqlConnection cnn, string name, UncommittedMessages data, MessageRecord msg)
         {
-            var cmd = cnn.CreateCommand();
-            cmd.CommandText = mantaAppendNoStreamCommand;
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            var p = cmd.Parameters.Add(paramStreamName, SqlDbType.VarChar, SqlClientExtensions.DefaultStreamNameLength);
-            p.Value = name;
-            p = cmd.Parameters.Add(paramCorrelationId, SqlDbType.UniqueIdentifier);
-            p.Value = data.CorrelationId;
-            p = cmd.Parameters.Add(paramContractId, SqlDbType.Int);
-            p.Value = msg.ContractId;
-            p = cmd.Parameters.Add(paramMessageId, SqlDbType.UniqueIdentifier);
-            p.Value = msg.MessageId;
-            p = cmd.Parameters.Add(paramPayload, SqlDbType.VarBinary);
-            p.Value = msg.Payload;
-
-            return cmd;
+            return cnn
+                .CreateCommand(mantaAppendNoStreamCommand)
+                .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
+                .AddInputParam(paramCorrelationId, SqlDbType.UniqueIdentifier, data.CorrelationId)
+                .AddInputParam(paramContractId, SqlDbType.Int, msg.ContractId)
+                .AddInputParam(paramMessageId, SqlDbType.UniqueIdentifier, msg.MessageId)
+                .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload);
         }
     }
 }
