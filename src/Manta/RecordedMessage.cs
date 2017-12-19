@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Manta
 {
+    [StructLayout(LayoutKind.Sequential)]
     public struct RecordedMessage
     {
         public RecordedMessage(Guid messageId, int version, int contractId, byte[] payload)
