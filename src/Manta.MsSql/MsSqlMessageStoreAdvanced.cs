@@ -126,8 +126,8 @@ namespace Manta.MsSql
             using (var cmd = connection.CreateCommandForReadHeadMessagePosition())
             {
                 await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
-                var head = await cmd.ExecuteScalarAsync(cancellationToken).NotOnCapturedContext() ?? 0;
-                if (head == DBNull.Value) head = 0;
+                var head = await cmd.ExecuteScalarAsync(cancellationToken).NotOnCapturedContext();
+                if (head == null || head == DBNull.Value) head = 0;
                 _settings.Logger.Trace("Read head message position as {0}.", head);
                 return (long)head;
             }
