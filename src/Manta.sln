@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2003
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta", "Manta\Manta.csproj", "{362419AC-6DAC-40CA-B981-CEA1E410F563}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.MsSql.Benchmarks.NetCore", "Manta.MsSql.Benchmarks.NetCore\Manta.MsSql.Benchmarks.NetCore.csproj", "{AAA4405E-0116-405C-97A8-61B8AFDB1092}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manta.MsSql.Benchmarks", "Manta.MsSql.Benchmarks\Manta.MsSql.Benchmarks.csproj", "{41ED97BB-F6A8-4D5D-B6CA-51039C6A818B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", "{2A3B6A4A-79B6-4DCC-AA86-1A6FC3EF9B13}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,6 +56,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{AAA4405E-0116-405C-97A8-61B8AFDB1092} = {2A3B6A4A-79B6-4DCC-AA86-1A6FC3EF9B13}
+		{41ED97BB-F6A8-4D5D-B6CA-51039C6A818B} = {2A3B6A4A-79B6-4DCC-AA86-1A6FC3EF9B13}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1BC55FFE-A2C5-4039-AA38-D9F1D2B3EC88}
