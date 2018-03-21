@@ -7,7 +7,7 @@ namespace Manta.MsSql
     {
         private const string paramStreamName = "@StreamName";
         private const string paramCorrelationId = "@CorrelationId";
-        private const string paramContractId = "@ContractId";
+        private const string paramContractName = "@ContractName";
         private const string paramMessageVersion = "@MessageVersion";
         private const string paramMessageId = "@MessageId";
         private const string paramPayload = "@Payload";
@@ -22,7 +22,7 @@ namespace Manta.MsSql
                 .CreateCommand(mantaAppendAnyVersionCommand)
                 .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
                 .AddInputParam(paramCorrelationId, SqlDbType.UniqueIdentifier, data.CorrelationId)
-                .AddInputParam(paramContractId, SqlDbType.Int, msg.ContractId)
+                .AddInputParam(paramContractName, SqlDbType.VarChar, msg.ContractName, SqlClientExtensions.DefaultContractNameLength)
                 .AddInputParam(paramMessageId, SqlDbType.UniqueIdentifier, msg.MessageId)
                 .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload);
         }
@@ -33,7 +33,7 @@ namespace Manta.MsSql
                 .CreateCommand(mantaAppendExpectedVersionCommand)
                 .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
                 .AddInputParam(paramCorrelationId, SqlDbType.UniqueIdentifier, data.CorrelationId)
-                .AddInputParam(paramContractId, SqlDbType.Int, msg.ContractId)
+                .AddInputParam(paramContractName, SqlDbType.VarChar, msg.ContractName, SqlClientExtensions.DefaultContractNameLength)
                 .AddInputParam(paramMessageId, SqlDbType.UniqueIdentifier, msg.MessageId)
                 .AddInputParam(paramMessageVersion, SqlDbType.Int, messageVersion)
                 .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload);
@@ -45,7 +45,7 @@ namespace Manta.MsSql
                 .CreateCommand(mantaAppendNoStreamCommand)
                 .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
                 .AddInputParam(paramCorrelationId, SqlDbType.UniqueIdentifier, data.CorrelationId)
-                .AddInputParam(paramContractId, SqlDbType.Int, msg.ContractId)
+                .AddInputParam(paramContractName, SqlDbType.VarChar, msg.ContractName, SqlClientExtensions.DefaultContractNameLength)
                 .AddInputParam(paramMessageId, SqlDbType.UniqueIdentifier, msg.MessageId)
                 .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload);
         }

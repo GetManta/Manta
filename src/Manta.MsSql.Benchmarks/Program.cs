@@ -45,7 +45,7 @@ namespace Manta.MsSql.Benchmarks
             var msgs = new MessageRecord[rnd.Next(1, maxEventsCounter)];
             for (var i = 1; i <= msgs.Length; i++)
             {
-                msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), 1, Encoding.UTF8.GetBytes(string.Join(string.Empty, Enumerable.Range(0, rnd.Next(100, 400)).ToArray())));
+                msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), i.ToString(), Encoding.UTF8.GetBytes(string.Join(string.Empty, Enumerable.Range(0, rnd.Next(100, 400)).ToArray())));
             }
             return msgs;
         }

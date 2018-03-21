@@ -17,7 +17,7 @@ namespace Manta
         /// Running Linearizer and wait for work be done.
         /// </summary>
         /// <returns>Task</returns>
-        Task RunNow();
+        Task RunAndWait();
 
         /// <summary>
         /// Stopping Linearizer.

@@ -1,20 +1,20 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 
 namespace Manta
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct MessageRecord
+    public class MessageRecord
     {
-        public MessageRecord(Guid messageId, int contractId, byte[] payload)
+        public const byte DefaultContractNameLength = 128;
+
+        public MessageRecord(Guid messageId, string contractName, byte[] payload)
         {
             MessageId = messageId;
-            ContractId = contractId;
-            Payload = payload;
+            ContractName = contractName ?? throw new ArgumentNullException(nameof(contractName));
+            Payload = payload ?? throw new ArgumentNullException(nameof(payload));
         }
 
         public Guid MessageId { get; }
-        public int ContractId { get; }
+        public string ContractName { get; }
         public byte[] Payload { get; }
     }
 }

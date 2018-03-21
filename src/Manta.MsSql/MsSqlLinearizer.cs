@@ -16,10 +16,7 @@ namespace Manta.MsSql
         private readonly string _connectionString;
 
         public MsSqlLinearizer(string connectionString, ILogger logger, int batchSize = 5000)
-            : this(connectionString, logger, TimeSpan.Zero, TimeSpan.Zero, batchSize)
-        {
-            
-        }
+            : this(connectionString, logger, TimeSpan.Zero, TimeSpan.Zero, batchSize) { }
 
         public MsSqlLinearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan workDuration, int batchSize = 5000)
             : base(logger, timeout, workDuration)

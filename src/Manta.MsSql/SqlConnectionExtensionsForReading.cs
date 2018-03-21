@@ -41,7 +41,7 @@ namespace Manta.MsSql
 
         private const byte columnIndexForMessageId = 0;
         private const byte columnIndexForMessageVersion = 1;
-        private const byte columnIndexForContractId = 2;
+        private const byte columnIndexForContractName = 2;
         private const byte columnIndexForPayload = 3;
 
         public static async Task<RecordedMessage> GetRecordedMessage(this SqlDataReader reader, CancellationToken cancellationToken)
@@ -49,7 +49,7 @@ namespace Manta.MsSql
             return new RecordedMessage(
                 await reader.GetFieldValueAsync<Guid>(columnIndexForMessageId, cancellationToken).NotOnCapturedContext(),
                 await reader.GetFieldValueAsync<int>(columnIndexForMessageVersion, cancellationToken).NotOnCapturedContext(),
-                await reader.GetFieldValueAsync<int>(columnIndexForContractId, cancellationToken).NotOnCapturedContext(),
+                await reader.GetFieldValueAsync<string>(columnIndexForContractName, cancellationToken).NotOnCapturedContext(),
                 await reader.GetFieldValueAsync<byte[]>(columnIndexForPayload, cancellationToken).NotOnCapturedContext());
         }
     }

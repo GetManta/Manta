@@ -4,7 +4,7 @@
     [MessageVersion] [int] NOT NULL,
     [MessageId] [uniqueidentifier] NOT NULL,
     [CorrelationId] [uniqueidentifier] NOT NULL,
-    [ContractId] [int] NOT NULL,
+    [ContractName] [varchar](128) NOT NULL,
     [Timestamp] [datetime2](3) NOT NULL DEFAULT(getutcdate()),
     [Payload] [varbinary](MAX) NOT NULL,
     [MessagePosition] [bigint] NULL,
@@ -19,12 +19,6 @@ CREATE NONCLUSTERED INDEX [IX_Streams_MessagePosition_InternalId] ON [dbo].[Stre
 (
     [MessagePosition] ASC,
     [InternalId] ASC
-)
-WHERE ([MessagePosition] IS NOT NULL);
-
-CREATE NONCLUSTERED INDEX [IX_Streams_ContractId] ON [dbo].[Streams]
-(
-    [ContractId] ASC
 )
 WHERE ([MessagePosition] IS NOT NULL);
 
@@ -57,7 +51,7 @@ CREATE PROCEDURE [dbo].[mantaAppendAnyVersion]
 (
     @StreamName VARCHAR(512),
     @CorrelationId UNIQUEIDENTIFIER,
-    @ContractId INT,
+    @ContractName VARCHAR(128),
     @MessageId UNIQUEIDENTIFIER,
     @Payload VARBINARY(MAX)
 )
@@ -69,13 +63,13 @@ BEGIN
         RETURN; -- idempotency checking
     END
 
-    INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractId],[Payload])
+    INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload])
     SELECT TOP 1
         @StreamName,
         IsNull(MAX(s.[MessageVersion]), 0) + 1,
         @MessageId,
         @CorrelationId,
-        @ContractId,
+        @ContractName,
         @Payload
     FROM
         [Streams] s WITH(READPAST,ROWLOCK)
@@ -88,7 +82,7 @@ CREATE PROCEDURE [dbo].[mantaAppendExpectedVersion]
 (
     @StreamName VARCHAR(512),
     @CorrelationId UNIQUEIDENTIFIER,
-    @ContractId INT,
+    @ContractName VARCHAR(128),
     @MessageId UNIQUEIDENTIFIER,
     @MessageVersion INT,
     @Payload VARBINARY(MAX)
@@ -101,13 +95,13 @@ BEGIN
         RETURN; -- idempotency checking
     END
 
-    INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractId],[Payload])
+    INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload])
     SELECT TOP 1
         s.[Name],
         @MessageVersion,
         @MessageId,
         @CorrelationId,
-        @ContractId,
+        @ContractName,
         @Payload
     FROM
         [Streams] s WITH(READPAST,ROWLOCK)
@@ -125,7 +119,7 @@ CREATE PROCEDURE [dbo].[mantaAppendNoStream]
 (
     @StreamName VARCHAR(512),
     @CorrelationId UNIQUEIDENTIFIER,
-    @ContractId INT,
+    @ContractName VARCHAR(128),
     @MessageId UNIQUEIDENTIFIER,
     @Payload VARBINARY(MAX)
 )
@@ -137,8 +131,8 @@ BEGIN
         RETURN; -- idempotency checking
     END
 
-    INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractId],[Payload])
-    VALUES(@StreamName,1,@MessageId,@CorrelationId,@ContractId,@Payload)
+    INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload])
+    VALUES(@StreamName,1,@MessageId,@CorrelationId,@ContractName,@Payload)
 END;
 GO
 
@@ -154,7 +148,7 @@ BEGIN
     SELECT
         s.[MessageId],
         s.[MessageVersion],
-        s.[ContractId],
+        s.[ContractName],
         s.[Payload]
     FROM
         [Streams] s WITH(READPAST,ROWLOCK)
@@ -178,7 +172,7 @@ BEGIN
     SELECT TOP 1
         s.[MessageId],
         s.[MessageVersion],
-        s.[ContractId],
+        s.[ContractName],
         s.[Payload]
     FROM
         [Streams] s WITH(READPAST,ROWLOCK)

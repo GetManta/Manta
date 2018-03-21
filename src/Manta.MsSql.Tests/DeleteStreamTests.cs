@@ -57,9 +57,9 @@ namespace Manta.MsSql.Tests
                 Guid.NewGuid(),
                 new[]
                 {
-                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), 1, new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 })
+                    new MessageRecord(Guid.NewGuid(), "a", new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), "b", new byte[]{ 1, 2, 3 }),
+                    new MessageRecord(Guid.NewGuid(), "a", new byte[]{ 1, 2, 3 })
                 });
         }
     }

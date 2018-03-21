@@ -1,9 +1,6 @@
-﻿using System.Runtime.InteropServices;
-
-namespace Manta
+﻿namespace Manta
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct StreamMetadataResult
+    public class StreamMetadataResult
     {
         /// <summary>
         /// The identifier of the stream.

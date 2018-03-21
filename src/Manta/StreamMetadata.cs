@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 
 namespace Manta
 {
     /// <summary>
     /// A struct representing uncommited stream metadata
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct StreamMetadata
+    public class StreamMetadata
     {
         public StreamMetadata(int? maxCount, TimeSpan? maxAge, byte[] customPayload)
         {

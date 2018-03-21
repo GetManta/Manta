@@ -1,9 +1,6 @@
-﻿using System.Runtime.InteropServices;
-
-namespace Manta
+﻿namespace Manta
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public struct RecordedStream
+    public class RecordedStream
     {
         public RecordedStream(RecordedMessage[] messages)
         {
