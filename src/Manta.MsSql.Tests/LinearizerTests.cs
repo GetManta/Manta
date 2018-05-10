@@ -24,7 +24,7 @@ namespace Manta.MsSql.Tests
 
             using (var linearizer = new MsSqlLinearizer(ConnectionString, new NullLogger(), batchSize: 4))
             {
-                await linearizer.RunAndWait().NotOnCapturedContext();
+                await linearizer.Run().NotOnCapturedContext();
             }
 
             var head = await store.Advanced.ReadHeadMessagePosition().NotOnCapturedContext();

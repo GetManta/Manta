@@ -14,10 +14,10 @@ namespace Manta
         void Start();
 
         /// <summary>
-        /// Running Linearizer and wait for work be done.
+        /// Run once and exit when done.
         /// </summary>
         /// <returns>Task</returns>
-        Task RunAndWait();
+        Task Run();
 
         /// <summary>
         /// Stopping Linearizer.

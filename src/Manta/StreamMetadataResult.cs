@@ -3,9 +3,9 @@
     public class StreamMetadataResult
     {
         /// <summary>
-        /// The identifier of the stream.
+        /// The name of the stream.
         /// </summary>
-        public string StreamName { get; }
+        public string Stream { get; }
 
         /// <summary>
         /// True if the stream is soft-deleted.
@@ -22,9 +22,9 @@
         /// </summary>
         public StreamMetadata Metadata { get; }
 
-        public StreamMetadataResult(string streamName, int version, bool isStreamDeleted, StreamMetadata metadata)
+        public StreamMetadataResult(string stream, int version, bool isStreamDeleted, StreamMetadata metadata)
         {
-            StreamName = streamName;
+            Stream = stream;
             Version = version;
             IsStreamDeleted = isStreamDeleted;
             Metadata = metadata;

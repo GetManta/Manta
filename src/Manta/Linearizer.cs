@@ -48,7 +48,7 @@ namespace Manta
         }
 
         /// <inheritdoc />
-        public async Task RunAndWait()
+        public async Task Run()
         {
             if (_isWorking) return;
             _isWorking = true;

@@ -11,6 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.MsSql", "Manta.MsSql\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7439BDD4-BA3E-4C5E-B5EE-736BF4352326}"
 	ProjectSection(SolutionItems) = preProject
+		NuGet.config = NuGet.config
 		..\README.md = ..\README.md
 		SharedAssemblyInfo.cs = SharedAssemblyInfo.cs
 	EndProjectSection
@@ -22,6 +23,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manta.MsSql.Benchmarks", "Manta.MsSql.Benchmarks\Manta.MsSql.Benchmarks.csproj", "{41ED97BB-F6A8-4D5D-B6CA-51039C6A818B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", "{2A3B6A4A-79B6-4DCC-AA86-1A6FC3EF9B13}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projections", "Projections", "{50ADE558-86BB-432B-A36F-D7733BF8DD52}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.Projections", "Manta.Projections\Manta.Projections.csproj", "{3296A906-D85C-413C-A9A9-483E454C661A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.Projections.MsSql", "Manta.Projections.MsSql\Manta.Projections.MsSql.csproj", "{560E9F61-8543-4151-9FCE-5AAED32DC8ED}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.Projections.Construct", "Manta.Projections.Construct\Manta.Projections.Construct.csproj", "{E57E3CE6-78E9-4530-AA4A-04F2773ED066}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +62,18 @@ Global
 		{41ED97BB-F6A8-4D5D-B6CA-51039C6A818B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41ED97BB-F6A8-4D5D-B6CA-51039C6A818B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41ED97BB-F6A8-4D5D-B6CA-51039C6A818B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3296A906-D85C-413C-A9A9-483E454C661A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3296A906-D85C-413C-A9A9-483E454C661A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3296A906-D85C-413C-A9A9-483E454C661A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3296A906-D85C-413C-A9A9-483E454C661A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{560E9F61-8543-4151-9FCE-5AAED32DC8ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{560E9F61-8543-4151-9FCE-5AAED32DC8ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{560E9F61-8543-4151-9FCE-5AAED32DC8ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{560E9F61-8543-4151-9FCE-5AAED32DC8ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E57E3CE6-78E9-4530-AA4A-04F2773ED066}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E57E3CE6-78E9-4530-AA4A-04F2773ED066}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E57E3CE6-78E9-4530-AA4A-04F2773ED066}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E57E3CE6-78E9-4530-AA4A-04F2773ED066}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +81,9 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{AAA4405E-0116-405C-97A8-61B8AFDB1092} = {2A3B6A4A-79B6-4DCC-AA86-1A6FC3EF9B13}
 		{41ED97BB-F6A8-4D5D-B6CA-51039C6A818B} = {2A3B6A4A-79B6-4DCC-AA86-1A6FC3EF9B13}
+		{3296A906-D85C-413C-A9A9-483E454C661A} = {50ADE558-86BB-432B-A36F-D7733BF8DD52}
+		{560E9F61-8543-4151-9FCE-5AAED32DC8ED} = {50ADE558-86BB-432B-A36F-D7733BF8DD52}
+		{E57E3CE6-78E9-4530-AA4A-04F2773ED066} = {50ADE558-86BB-432B-A36F-D7733BF8DD52}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1BC55FFE-A2C5-4039-AA38-D9F1D2B3EC88}
