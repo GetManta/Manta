@@ -4,7 +4,7 @@
     [MessageVersion] [int] NOT NULL,
     [MessageId] [uniqueidentifier] NOT NULL,
     [CorrelationId] [uniqueidentifier] NOT NULL,
-    [ContractName] [varchar](128) NOT NULL,
+    [ContractName] [varchar](128)  COLLATE Latin1_General_BIN2 NOT NULL,
     [Timestamp] [datetime2](3) NOT NULL DEFAULT(getutcdate()),
     [Payload] [varbinary](MAX) NOT NULL,
     [MessagePosition] [bigint] NULL,
@@ -19,8 +19,7 @@ CREATE NONCLUSTERED INDEX [IX_Streams_MessagePosition_InternalId] ON [dbo].[Stre
 (
     [MessagePosition] ASC,
     [InternalId] ASC
-)
-WHERE ([MessagePosition] IS NOT NULL);
+);
 
 -- For idempotency checking per stream
 CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_MessageId_Name] ON [dbo].[Streams]
@@ -194,18 +193,18 @@ BEGIN
     SELECT @MessagePosition = IsNull(MAX(s.[MessagePosition]), 0) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] > 0
 
     UPDATE dest SET
-        [MessagePosition] = @MessagePosition,
-        @MessagePosition = @MessagePosition + 1
+        @MessagePosition = [MessagePosition] = @MessagePosition + 1
     FROM
-        [Streams] dest
+        [Streams] dest WITH (INDEX ([IX_Streams_InternalId]))
         INNER JOIN (SELECT TOP(@BatchSize) s.[InternalId] FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC) src ON src.[InternalId] = dest.[InternalId]
+    OPTION (MAXDOP 1)
 
     -- Update stats
     UPDATE StreamsStats SET
         MaxMessagePosition = @MessagePosition,
-        CountOfAllMessages = (SELECT SUM(st.row_count) FROM sys.dm_db_partition_stats st WHERE object_name(object_id) = 'Streams' AND (index_id < 2))
+        CountOfAllMessages = (SELECT SUM(st.row_count) FROM sys.dm_db_partition_stats st WHERE OBJECT_NAME(object_id) = 'Streams' AND (index_id < 2))
 
-    SELECT TOP 1 CAST(1 AS BIT) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC
+    SELECT TOP 1 CAST(1 AS BIT) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL
 END;
 GO
 
@@ -270,5 +269,32 @@ BEGIN
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
     END
+END;
+GO
+
+CREATE PROCEDURE [dbo].[mantaReadAllStreamsForward]
+(
+    @Limit INT,
+    @FromPosition BIGINT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT TOP(@Limit)
+        s.[Name] AS [StreamName],
+        s.[ContractName],
+        s.[CorrelationId],
+        s.[Timestamp],
+        s.[MessageId],
+        s.[MessageVersion],
+        s.[MessagePosition],
+        s.[Payload] AS [MessagePayload],
+        [MessageMetadataPayload] = NULL
+    FROM
+        [Streams] s WITH(READPAST,ROWLOCK)
+    WHERE
+        s.[MessagePosition] > @FromPosition
+    ORDER BY
+        s.[MessagePosition] ASC
 END;
 GO
