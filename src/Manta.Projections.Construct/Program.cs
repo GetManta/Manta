@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Manta.Projections.Construct.TestProjections;
 using Manta.Projections.MsSql;
 
@@ -15,6 +16,7 @@ namespace Manta.Projections.Construct
 
         private static async Task Execute()
         {
+            Console.WriteLine("Starting...");
             var projector = new Projector(
                 "StaticUniqueProjectorName",
                 new MsSqlDataSource(connectionString),
@@ -28,11 +30,19 @@ namespace Manta.Projections.Construct
 
             projector.AddProjections(typeof(TestProjection).Assembly, t => t.Namespace.StartsWith("Manta.Projections.Construct"));
 
+            projector.OnProjectingError(
+                (d, env, ctx, exc) =>
+                {
+                    Console.WriteLine("Projecting error " + exc.Message);
+                });
 
             await projector.Run(); // Run once and exit when done
 
-            // projector.Start(); // Start running periodically
+            // projector.Start(settings); // Start running periodically
             // projector.Stop(); // Stop running periodically
+
+            Console.WriteLine("Done. Press any key...");
+            Console.ReadKey();
         }
     }
 }

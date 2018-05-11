@@ -13,6 +13,7 @@ namespace Manta.Projections
     {
         private readonly IProjectionCheckpointRepository _checkpointRepository;
         private readonly List<ProjectionDescriptor> _projectionDescriptors;
+        private Action<ProjectionDescriptor, MessageEnvelope, ProjectingContext, Exception> _onProjectionError;
 
         protected ProjectorBase(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, int batchSize)
         {
@@ -22,12 +23,14 @@ namespace Manta.Projections
             Name = name;
             DataSource = dataSource;
             BatchSize = batchSize;
+            MaxProjectingRetries = 3;
 
             _projectionDescriptors = new List<ProjectionDescriptor>(20);
         }
 
         public string Name { get; }
         public IStreamDataSource DataSource { get; }
+        public byte MaxProjectingRetries { get; }
         public int BatchSize { get; }
 
         public void AddProjection<TProjection>() where TProjection : Projection
@@ -63,6 +66,11 @@ namespace Manta.Projections
             Logger = logger ?? new NullLogger();
         }
 
+        public void OnProjectingError(Action<ProjectionDescriptor, MessageEnvelope, ProjectingContext, Exception> onProjectionError)
+        {
+            _onProjectionError = onProjectionError;
+        }
+
         public void Start()
         {
 
@@ -75,33 +83,53 @@ namespace Manta.Projections
 
         public async Task Run(CancellationToken cancellationToken = default(CancellationToken))
         {
-            await PrepareCheckpoints(cancellationToken);
-            await RunOnce(cancellationToken);
+            await PrepareCheckpoints(cancellationToken).NotOnCapturedContext();
+
+            //while (true)
+            {
+                var results = await RunOnce(cancellationToken).NotOnCapturedContext();
+                PrintStats(results);
+                //if (results.All(x => x.AnyDispatched == false)) break;
+            }
         }
 
-        protected abstract Task RunOnce(CancellationToken cancellationToken);
+        private static void PrintStats(List<DispatchingResult> results)
+        {
+            var totalTime = (double)results.Sum(x => x.ElapsedMilliseconds) / 1000;
+            var totalMessages = results.Sum(x => x.EnvelopesCount);
+            var avg = Math.Round(totalMessages / totalTime, 2, MidpointRounding.AwayFromZero);
+            Console.WriteLine($"Total time {totalTime}sec | Average processing {avg}/sec.");
+        }
+
+        internal abstract Task<List<DispatchingResult>> RunOnce(CancellationToken cancellationToken);
 
         private async Task PrepareCheckpoints(CancellationToken cancellationToken)
         {
-            var checkpoints = (await _checkpointRepository.Fetch(cancellationToken)).ToList();
+            var checkpoints = (await _checkpointRepository.Fetch(cancellationToken).NotOnCapturedContext()).ToList();
             foreach (var descriptor in _projectionDescriptors)
             {
                 descriptor.Checkpoint = checkpoints.FirstOrDefault(x => x.ProjectionName == descriptor.ContractName)
-                    ?? await _checkpointRepository.AddCheckpoint(Name, descriptor.ContractName, cancellationToken);
+                    ?? await _checkpointRepository.AddCheckpoint(Name, descriptor.ContractName, cancellationToken).NotOnCapturedContext();
             }
 
             await _checkpointRepository.Delete(
                 checkpoints.Where(x => _projectionDescriptors.All(z => z.Checkpoint != x)),
-                cancellationToken);
+                cancellationToken).NotOnCapturedContext();
         }
 
         protected ILogger Logger { get; private set; }
         protected IProjectionFactory ProjectionFactory { get; private set; }
-        protected List<ProjectionDescriptor> GetDescriptors() => _projectionDescriptors;
+        protected List<ProjectionDescriptor> GetActiveDescriptors() => _projectionDescriptors.Where(x => x.Checkpoint.DroppedAtUtc == null).ToList();
 
         protected async Task UpdateDescriptors(IEnumerable<ProjectionDescriptor> descriptors, CancellationToken cancellationToken)
         {
-            await _checkpointRepository.Update(descriptors.Select(x => x.Checkpoint).ToList(), cancellationToken);
+            await _checkpointRepository.Update(descriptors.Select(x => x.Checkpoint).ToList(), cancellationToken).NotOnCapturedContext();
         }
+
+        protected void ProjectingError(ProjectionDescriptor projection, MessageEnvelope envelope, ProjectingContext context, Exception exception)
+        {
+            _onProjectionError?.Invoke(projection, envelope, context, exception);
+        }
+
     }
 }

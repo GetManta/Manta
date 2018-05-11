@@ -7,10 +7,9 @@ namespace Manta.Projections
     {
         public virtual Task Create() { return Task.CompletedTask; }
         public virtual Task Destroy() { return Task.CompletedTask; }
-        public virtual ExceptionResolution DefaultExceptionResolution => ExceptionResolution.Retry;
     }
 
-    public enum ExceptionResolution : byte
+    public enum ExceptionSolutions : byte
     {
         Ignore = 0,
         Retry = 1,
@@ -24,25 +23,42 @@ namespace Manta.Projections
 
     public class ProjectingContext
     {
-        public byte MaxRetryAttempts { get; private set; }
-        public byte RetryAttempts { get; private set; }
+        internal ProjectingContext(byte maxProjectingRetries)
+        {
+            MaxProjectingRetries = maxProjectingRetries;
+            ExceptionSolution = ExceptionSolutions.Retry;
+            RetryAttempt = 1;
+        }
+
+        public byte MaxProjectingRetries { get; }
+        public byte RetryAttempt { get; private set; }
+
+        internal void NextRetry()
+        {
+            RetryAttempt++;
+        }
 
         public void Retry()
         {
-            Solution = ExceptionResolution.Retry;
+            ExceptionSolution = ExceptionSolutions.Retry;
         }
 
         public void Drop()
         {
-            Solution = ExceptionResolution.Drop;
+            ExceptionSolution = ExceptionSolutions.Drop;
         }
 
         public void Ignore()
         {
-            Solution = ExceptionResolution.Ignore;
+            ExceptionSolution = ExceptionSolutions.Ignore;
         }
 
-        internal ExceptionResolution Solution { get; private set; }
+        internal ExceptionSolutions ExceptionSolution { get; private set; }
+
+        public bool CanRetry()
+        {
+            return RetryAttempt < MaxProjectingRetries;
+        }
     }
 
     public class ProjectionException : Exception

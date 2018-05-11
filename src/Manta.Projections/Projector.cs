@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using System.Transactions;
 
 namespace Manta.Projections
 {
@@ -13,12 +13,25 @@ namespace Manta.Projections
         public Projector(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, int batchSize = 1000)
             : base(name, dataSource, checkpointRepository, batchSize) { }
 
-        protected override async Task RunOnce(CancellationToken cancellationToken)
+        internal override async Task<List<DispatchingResult>> RunOnce(CancellationToken token)
         {
-            var projectionDescriptors = GetDescriptors();
+            var projectionDescriptors = GetActiveDescriptors();
+            if (projectionDescriptors.Count == 0) return new List<DispatchingResult>(0);
 
-            var projectionsFlow = PrepareProjectionsFlow(cancellationToken);
+            var projectionsFlow = PrepareProjectionsFlow(token);
+            var flow = ProduceProjectionsFlow(projectionsFlow, projectionDescriptors, token);
+            var consumer = ConsumeProjectionsFlow(projectionsFlow, token).NotOnCapturedContext();
 
+            await Task.WhenAll(flow, projectionsFlow.Completion);
+
+            var results = await consumer;
+            Console.WriteLine("Projection groups " + results.Count);
+
+            return results;
+        }
+
+        private async Task ProduceProjectionsFlow(TransformBlock<List<ProjectionDescriptor>, DispatchingResult> projectionsFlow, List<ProjectionDescriptor> projectionDescriptors, CancellationToken token)
+        {
             var positionRanges = this.GenerateRanges(
                 projectionDescriptors.Min(x => x.Checkpoint.Position),
                 projectionDescriptors.Max(x => x.Checkpoint.Position),
@@ -26,122 +39,206 @@ namespace Manta.Projections
 
             foreach (var projectionGroup in projectionDescriptors.GroupBy(x => positionRanges.FirstOrDefault(r => r > x.Checkpoint.Position)))
             {
-                await projectionsFlow.SendAsync(projectionGroup.Select(x => x).ToList(), cancellationToken);
+                await projectionsFlow.SendAsync(projectionGroup.ToList(), token);
             }
-
-            await projectionsFlow.Completion;
-
-            // podziel MessagePosition projekcji na bloki po 1000
-            // dodaj do listy blokowe przetwarzanie dla wszystkich projekcji potrzebujących mniej zdarzeń niż 1000
-            // dodaj do listy blokowe przetwarzanie dla każdej z projekcji potrzebujących więcej zdarzeń niż 1000
-            // uruchom transformacje commitując/batch'ując per blok
+            projectionsFlow.Complete();
         }
 
-        private ActionBlock<List<ProjectionDescriptor>> PrepareProjectionsFlow(CancellationToken cancellationToken)
+        private static async Task<List<DispatchingResult>> ConsumeProjectionsFlow(TransformBlock<List<ProjectionDescriptor>, DispatchingResult> projectionsFlow, CancellationToken token)
         {
-            return new ActionBlock<List<ProjectionDescriptor>>(
-                async descriptors => await DispatchProjectionsRange(descriptors, cancellationToken),
+            var results = new List<DispatchingResult>(2);
+            while(await projectionsFlow.OutputAvailableAsync(token))
+            {
+                var r = await projectionsFlow.ReceiveAsync(token).NotOnCapturedContext();
+                results.Add(r);
+            }
+
+            return results;
+        }
+
+        private TransformBlock<List<ProjectionDescriptor>, DispatchingResult> PrepareProjectionsFlow(CancellationToken token)
+        {
+            return new TransformBlock<List<ProjectionDescriptor>, DispatchingResult>(
+                async descriptors => await DispatchProjectionsRange(descriptors, token),
                 new ExecutionDataflowBlockOptions
                 {
-                    CancellationToken = cancellationToken,
+                    CancellationToken = token,
                     MaxDegreeOfParallelism = Environment.ProcessorCount,
                     BoundedCapacity = Environment.ProcessorCount
                 });
         }
 
-        private TransformBlock<MessageRaw, MessageEnvelope> PrepareDeserializationFlow(CancellationToken cancellationToken)
+        private TransformBlock<MessageRaw, MessageEnvelope> PrepareDeserializationFlow(CancellationToken token)
         {
             return new TransformBlock<MessageRaw, MessageEnvelope>(
-                raw => DeserializeTransformation(raw),
+                async raw => await DeserializeTransformation(raw),
                 new ExecutionDataflowBlockOptions
                 {
-                    CancellationToken = cancellationToken,
+                    CancellationToken = token,
                     MaxDegreeOfParallelism = Environment.ProcessorCount,
-                    BoundedCapacity = BatchSize / 10,
-                    EnsureOrdered = true
+                    BoundedCapacity = 200
                 });
         }
 
-        private async Task DispatchProjectionsRange(List<ProjectionDescriptor> descriptors, CancellationToken cancellationToken)
+        private async Task<List<MessageEnvelope>> DeserializeEnvelopes(List<ProjectionDescriptor> descriptors, CancellationToken token)
         {
-            var deserializeBlock = PrepareDeserializationFlow(cancellationToken);
+            var deserializeBlock = PrepareDeserializationFlow(token);
 
             var fromPosition = descriptors.Min(x => x.Checkpoint.Position);
-            await DataSource.Fetch(deserializeBlock, fromPosition, BatchSize, cancellationToken);
+            var fetcher = DataSource.Fetch(deserializeBlock, fromPosition, BatchSize, token);
+            var consumer = ConsumeDeserializedEnvelopes(deserializeBlock, token).NotOnCapturedContext();
 
-            var envelopes = new List<MessageEnvelope>(BatchSize / 10);
-            for (var i = 0; i < BatchSize / 10; i++)
+            await Task.WhenAll(fetcher, deserializeBlock.Completion);
+
+            var envelopes = await consumer;
+            Console.WriteLine("Received " + envelopes.Count);
+            return envelopes;
+        }
+
+        private async Task<List<MessageEnvelope>> ConsumeDeserializedEnvelopes(TransformBlock<MessageRaw, MessageEnvelope> deserializeBlock, CancellationToken token)
+        {
+            var envelopes = new List<MessageEnvelope>(BatchSize / 4);
+            while(await deserializeBlock.OutputAvailableAsync(token))
             {
-                try
-                {
-                    envelopes.Add(await deserializeBlock.ReceiveAsync(cancellationToken));
-                }
-                catch
-                {
-                    break;
-                }
+                var e = await deserializeBlock.ReceiveAsync(token).NotOnCapturedContext();
+                envelopes.Add(e);
             }
 
-            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled))
+            return envelopes;
+        }
+
+        private Task<MessageEnvelope> DeserializeTransformation(MessageRaw raw)
+        {
+            try
             {
-                try
+                var envelope = new MessageEnvelope
                 {
-                    foreach (var envelope in envelopes)
+                    Message = new object(),
+                    Meta = new Metadata
                     {
-                        await Dispatch(descriptors, envelope);
+                        CustomMetadata = null,
+                        CorrelationId = raw.CorrelationId,
+                        MessageContractName = raw.MessageContractName,
+                        MessageId = raw.MessageId,
+                        MessagePosition = raw.MessagePosition,
+                        MessageVersion = raw.MessageVersion,
+                        StreamId = raw.StreamId,
+                        Timestamp = raw.Timestamp
                     }
+                };
 
+                Console.WriteLine("Deserializing " + raw.MessagePosition);
 
-                    await UpdateDescriptors(descriptors, cancellationToken);
-                    scope.Complete();
-                }
-                catch (Exception e)
-                {
-                    // wystąpił nieobsłużony wyjątek w batchu
+                //await Task.Delay(1);
 
-                    Logger.Error(e.ToString());
-                }
+                return Task.FromResult(envelope);
+            }
+            catch(Exception e)
+            {
+                // log exception
+                return null;
             }
         }
 
-        private MessageEnvelope DeserializeTransformation(MessageRaw raw)
+        private async Task<DispatchingResult> DispatchProjectionsRange(List<ProjectionDescriptor> descriptors, CancellationToken token)
         {
-            var envelope = new MessageEnvelope
+            try
             {
-                Event = null,
-                Meta = new Metadata
-                {
-                    CustomMetadata = null,
-                    CorrelationId = raw.CorrelationId,
-                    MessageContractName = raw.MessageContractName,
-                    MessageId = raw.MessageId,
-                    MessagePosition = raw.MessagePosition,
-                    MessageVersion = raw.MessageVersion,
-                    StreamId = raw.StreamId,
-                    Timestamp = raw.Timestamp
-                }
-            };
+                var envelopes = await DeserializeEnvelopes(descriptors, token).NotOnCapturedContext();
+                var anyDispatched = false;
 
-            return envelope;
+                var sw = new Stopwatch();
+                sw.Start();
+
+                using (var scope = this.NewTransactionScope())
+                {
+                    try
+                    {
+                        foreach (var envelope in envelopes)
+                        {
+                            if (envelope.Message == null) continue;
+                            var dispatched = await Dispatch(descriptors, envelope).NotOnCapturedContext();
+                            anyDispatched |= dispatched;
+                        }
+
+                        await UpdateDescriptors(descriptors, token).NotOnCapturedContext();
+                        scope.Complete();
+                    }
+                    catch (Exception e) // unhandled exception in batch
+                    {
+                        sw.Stop();
+                        return new DispatchingResult(e, envelopes.Count, sw.ElapsedMilliseconds, anyDispatched);
+                    }
+                }
+
+                sw.Stop();
+                return new DispatchingResult(envelopes.Count, sw.ElapsedMilliseconds, anyDispatched);
+            }
+            catch (Exception e)
+            {
+                // log exception
+                return new DispatchingResult(e, 0, 0, false);
+            }
         }
 
-        private async Task Dispatch(IEnumerable<ProjectionDescriptor> projections, MessageEnvelope envelope)
+        private async Task<bool> Dispatch(IEnumerable<ProjectionDescriptor> projections, MessageEnvelope envelope)
         {
+            var messageType = envelope.Message.GetType();
+            var anyDispatched = false;
             foreach (var projection in projections)
             {
-                if (projection.Checkpoint.Position >= envelope.Meta.MessagePosition) return;
-                await DispatchProjection(projection, envelope);
+                if (projection.Checkpoint.DroppedAtUtc != null) continue;
+                if (projection.Checkpoint.Position >= envelope.Meta.MessagePosition) continue;
+                if (!projection.IsProjecting(messageType)) continue;
+
+                var context = new ProjectingContext(MaxProjectingRetries);
+                var dispatched = await DispatchProjection(projection, envelope, context);
+                if (dispatched)
+                {
+                    projection.Checkpoint.Position = envelope.Meta.MessagePosition;
+                    anyDispatched = true;
+                }
+            }
+
+            return anyDispatched;
+        }
+
+        private async Task<bool> DispatchProjection(ProjectionDescriptor projection, MessageEnvelope envelope, ProjectingContext context)
+        {
+            while (true)
+            {
+                try
+                {
+                    await TryDispatch(projection, envelope, context);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    ProjectingError(projection, envelope, context, ex);
+                    if (context.ExceptionSolution == ExceptionSolutions.Ignore)
+                    {
+                        return true;
+                    }
+                    if (context.ExceptionSolution == ExceptionSolutions.Drop)
+                    {
+                        projection.Drop();
+                        return false;
+                    }
+                    if (!context.CanRetry())
+                    {
+                        projection.Drop();
+                        return false;
+                    }
+                    context.NextRetry();
+                }
             }
         }
 
-        private Task DispatchProjection(ProjectionDescriptor projectionDescriptor, MessageEnvelope envelope)
+        private async Task TryDispatch(ProjectionDescriptor projection, MessageEnvelope envelope, ProjectingContext context)
         {
-            // execute handler on projection
-            // try 3 times
-            // check return status from ProjectingContext
-            // if 3 times throws then mark that projection as abandoned
-            // otherwise assign last processed position to envelope.MessagePosition
-            return Task.CompletedTask;
+            var instance = ProjectionFactory.CreateProjectionInstance(projection.ProjectionType);
+            if (instance == null) throw new NullReferenceException($"Projection instance {projection.ProjectionType.FullName} is null.");
+            await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context);
         }
     }
 }

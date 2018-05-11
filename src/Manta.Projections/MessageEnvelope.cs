@@ -3,6 +3,6 @@
     public class MessageEnvelope
     {
         public Metadata Meta { get; set; }
-        public object Event { get; set; }
+        public object Message { get; set; }
     }
 }

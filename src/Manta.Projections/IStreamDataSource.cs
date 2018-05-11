@@ -6,6 +6,6 @@ namespace Manta.Projections
 {
     public interface IStreamDataSource
     {
-        Task Fetch(ITargetBlock<MessageRaw> buffer, long fromPosition, int limit, CancellationToken cancellationToken = default(CancellationToken));
+        Task<int> Fetch(ITargetBlock<MessageRaw> buffer, long fromPosition, int limit, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

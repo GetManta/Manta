@@ -16,7 +16,7 @@ namespace Manta.Projections.MsSql
             _connectionString = connectionString;
         }
 
-        public async Task Fetch(ITargetBlock<MessageRaw> buffer, long fromPosition, int limit, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<int> Fetch(ITargetBlock<MessageRaw> buffer, long fromPosition, int limit, CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var cnn = new SqlConnection(_connectionString))
             {
@@ -27,29 +27,33 @@ namespace Manta.Projections.MsSql
                 cmd.AddInputParam(fromPositionParamName, DbType.Int64, fromPosition);
 
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
+                var rows = 0;
                 using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
                 {
-                    if (reader.HasRows)
+                    while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
                     {
-                        while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
+                        var raw = new MessageRaw
                         {
-                            await buffer.SendAsync(new MessageRaw
-                            {
-                                StreamId = await reader.GetFieldValueAsync<string>(colIndexForStreamName, cancellationToken).NotOnCapturedContext(),
-                                MessageContractName = await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext(),
-                                CorrelationId = await reader.GetFieldValueAsync<Guid>(colIndexForCorrelationId, cancellationToken).NotOnCapturedContext(),
-                                Timestamp = await reader.GetFieldValueAsync<DateTime>(colIndexForTimestamp, cancellationToken).NotOnCapturedContext(),
-                                MessageId = await reader.GetFieldValueAsync<Guid>(colIndexForMessageId, cancellationToken).NotOnCapturedContext(),
-                                MessageVersion = await reader.GetFieldValueAsync<int>(colIndexForMessageVersion, cancellationToken).NotOnCapturedContext(),
-                                MessagePosition = await reader.GetFieldValueAsync<long>(colIndexForMessagePosition, cancellationToken).NotOnCapturedContext(),
-                                MessagePayload = await reader.GetFieldValueAsync<byte[]>(colIndexForMessagePayload, cancellationToken).NotOnCapturedContext(),
-                                MessageMetadataPayload = await reader.IsDBNullAsync(colIndexForMessageMetadataPayload, cancellationToken)
-                                    ? null
-                                    : await reader.GetFieldValueAsync<byte[]>(colIndexForMessageMetadataPayload, cancellationToken).NotOnCapturedContext()
-                            }, cancellationToken);
-                        }
+                            StreamId = await reader.GetFieldValueAsync<string>(colIndexForStreamName, cancellationToken).NotOnCapturedContext(),
+                            MessageContractName = await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext(),
+                            CorrelationId = await reader.GetFieldValueAsync<Guid>(colIndexForCorrelationId, cancellationToken).NotOnCapturedContext(),
+                            Timestamp = await reader.GetFieldValueAsync<DateTime>(colIndexForTimestamp, cancellationToken).NotOnCapturedContext(),
+                            MessageId = await reader.GetFieldValueAsync<Guid>(colIndexForMessageId, cancellationToken).NotOnCapturedContext(),
+                            MessageVersion = await reader.GetFieldValueAsync<int>(colIndexForMessageVersion, cancellationToken).NotOnCapturedContext(),
+                            MessagePosition = await reader.GetFieldValueAsync<long>(colIndexForMessagePosition, cancellationToken).NotOnCapturedContext(),
+                            MessagePayload = await reader.GetFieldValueAsync<byte[]>(colIndexForMessagePayload, cancellationToken).NotOnCapturedContext(),
+                            MessageMetadataPayload = await reader.IsDBNullAsync(colIndexForMessageMetadataPayload, cancellationToken)
+                                ? null
+                                : await reader.GetFieldValueAsync<byte[]>(colIndexForMessageMetadataPayload, cancellationToken).NotOnCapturedContext()
+                        };
+
+                        await buffer.SendAsync(raw, cancellationToken).NotOnCapturedContext();
+                        rows++;
                     }
                 }
+
+                buffer.Complete();
+                return rows;
             }
         }
 
