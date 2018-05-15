@@ -13,7 +13,7 @@ namespace Manta.Projections
     {
         private readonly IProjectionCheckpointRepository _checkpointRepository;
         private readonly List<ProjectionDescriptor> _projectionDescriptors;
-        private Action<ProjectionDescriptor, MessageEnvelope, ProjectingContext, Exception> _onProjectionError;
+        private Action<ProjectingError> _onProjectionError;
 
         protected ProjectorBase(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, int batchSize)
         {
@@ -30,67 +30,75 @@ namespace Manta.Projections
 
         public string Name { get; }
         public IStreamDataSource DataSource { get; }
+        public ISerializer Serializer { get; private set; }
         public byte MaxProjectingRetries { get; }
         public int BatchSize { get; }
+        internal ILogger Logger { get; private set; }
 
-        public void AddProjection<TProjection>() where TProjection : Projection
+        public ProjectorBase AddSerializer(ISerializer serializer)
         {
-            AddProjection(typeof(TProjection));
+            Serializer = serializer;
+            return this;
         }
 
-        public void AddProjection(Type projectionType)
+        public ProjectorBase AddProjection<TProjection>() where TProjection : Projection
+        {
+            AddProjection(typeof(TProjection));
+            return this;
+        }
+
+        public ProjectorBase AddProjection(Type projectionType)
         {
             if (!typeof(Projection).IsAssignableFrom(projectionType))
                 throw new InvalidOperationException($"Type '{projectionType.FullName}' is not {typeof(Projection).Name} type.");
 
-            if (_projectionDescriptors.Any(x => x.ProjectionType == projectionType)) return;
+            if (_projectionDescriptors.Any(x => x.ProjectionType == projectionType)) return this;
             _projectionDescriptors.Add(new ProjectionDescriptor(projectionType));
+            return this;
         }
 
-        public void AddProjectionFactory(IProjectionFactory projectionFactory)
+        public ProjectorBase AddProjectionFactory(IProjectionFactory projectionFactory)
         {
             ProjectionFactory = projectionFactory ?? new ActivatorProjectionFactory();
+            return this;
         }
 
-        public void AddProjections(Assembly assembly, Func<Type, bool> filter = null)
+        public ProjectorBase AddProjections(Assembly assembly, Func<Type, bool> filter = null)
         {
             var projections = assembly.GetTypes().Where(t => typeof(Projection).IsAssignableFrom(t) && (filter?.Invoke(t) ?? true));
             foreach (var type in projections.Where(filter))
             {
                 AddProjection(type);
             }
+            return this;
         }
 
-        public void AddLogger(ILogger logger)
+        public ProjectorBase AddLogger(ILogger logger)
         {
             Logger = logger ?? new NullLogger();
+            return this;
         }
 
-        public void OnProjectingError(Action<ProjectionDescriptor, MessageEnvelope, ProjectingContext, Exception> onProjectionError)
+        public ProjectorBase OnProjectingError(Action<ProjectingError> onProjectionError)
         {
             _onProjectionError = onProjectionError;
+            return this;
         }
 
-        public void Start()
-        {
-
-        }
-
-        public void Stop()
-        {
-
-        }
-
-        public async Task Run(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IEnumerable<DispatchingResult>> Run(CancellationToken cancellationToken = default(CancellationToken))
         {
             await PrepareCheckpoints(cancellationToken).NotOnCapturedContext();
 
-            //while (true)
+            var stats = new List<DispatchingResult>();
+            while (true)
             {
                 var results = await RunOnce(cancellationToken).NotOnCapturedContext();
-                PrintStats(results);
-                //if (results.All(x => x.AnyDispatched == false)) break;
+                stats.AddRange(results);
+                if (results.All(x => x.AnyDispatched == false)) break;
             }
+
+            PrintStats(stats);
+            return stats;
         }
 
         private static void PrintStats(List<DispatchingResult> results)
@@ -117,7 +125,6 @@ namespace Manta.Projections
                 cancellationToken).NotOnCapturedContext();
         }
 
-        protected ILogger Logger { get; private set; }
         protected IProjectionFactory ProjectionFactory { get; private set; }
         protected List<ProjectionDescriptor> GetActiveDescriptors() => _projectionDescriptors.Where(x => x.Checkpoint.DroppedAtUtc == null).ToList();
 
@@ -128,7 +135,7 @@ namespace Manta.Projections
 
         protected void ProjectingError(ProjectionDescriptor projection, MessageEnvelope envelope, ProjectingContext context, Exception exception)
         {
-            _onProjectionError?.Invoke(projection, envelope, context, exception);
+            _onProjectionError?.Invoke(new ProjectingError(projection, envelope, context, exception));
         }
 
     }

@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Jil" Version="2.15.4" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Manta.Projections.MsSql\Manta.Projections.MsSql.csproj" />
     <ProjectReference Include="..\Manta.Projections\Manta.Projections.csproj" />
   </ItemGroup>

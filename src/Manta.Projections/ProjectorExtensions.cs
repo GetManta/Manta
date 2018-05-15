@@ -12,7 +12,7 @@ namespace Manta.Projections
 
         public static IEnumerable<long> GenerateRanges(this Projector p, long min, long max, long range)
         {
-            for (var i = min; i < max; i += range) yield return i;
+            for (var i = min; i <= max; i += range) yield return i;
         }
 
         public static TransactionScope NewTransactionScope(this Projector p)

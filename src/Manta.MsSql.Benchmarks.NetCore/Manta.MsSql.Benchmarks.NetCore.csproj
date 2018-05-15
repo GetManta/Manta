@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,9 +7,11 @@
 
   <ItemGroup>
     <Compile Include="..\Manta.MsSql.Benchmarks\Program.cs" Link="Program.cs" />
+    <Compile Include="..\Manta.MsSql.Benchmarks\TestContracts.cs" Link="TestContracts.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Jil" Version="2.15.4" />
     <PackageReference Include="System.Data.SqlClient" Version="4.4.3" />
   </ItemGroup>
 

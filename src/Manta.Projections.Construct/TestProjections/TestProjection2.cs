@@ -4,15 +4,14 @@ using System.Threading.Tasks;
 
 namespace Manta.Projections.Construct.TestProjections
 {
-    [DataContract(Name = "TestProjection")]
-    public class TestProjection : Projection,
+    [DataContract(Name = "TestProjection2")]
+    public class TestProjection2 : Projection,
         IProject<TestContracts.MessageOne>,
         IProject<TestContracts.MessageTwo>
     {
         public Task On(TestContracts.MessageOne m, Metadata meta, ProjectingContext context)
         {
-            //Console.WriteLine("On: " + m.GetType().Name);
-            return Task.CompletedTask;
+            throw new Exception("Should drop!");
         }
 
         public Task On(TestContracts.MessageTwo m, Metadata meta, ProjectingContext context)

@@ -24,10 +24,7 @@ namespace Manta.Projections
 
             await Task.WhenAll(flow, projectionsFlow.Completion);
 
-            var results = await consumer;
-            Console.WriteLine("Projection groups " + results.Count);
-
-            return results;
+            return await consumer;
         }
 
         private async Task ProduceProjectionsFlow(TransformBlock<List<ProjectionDescriptor>, DispatchingResult> projectionsFlow, List<ProjectionDescriptor> projectionDescriptors, CancellationToken token)
@@ -37,8 +34,9 @@ namespace Manta.Projections
                 projectionDescriptors.Max(x => x.Checkpoint.Position),
                 BatchSize);
 
-            foreach (var projectionGroup in projectionDescriptors.GroupBy(x => positionRanges.FirstOrDefault(r => r > x.Checkpoint.Position)))
+            foreach (var projectionGroup in projectionDescriptors.GroupBy(x => positionRanges.FirstOrDefault(r => r >= x.Checkpoint.Position)))
             {
+                Logger.Debug("Calculated min position {0}.", projectionGroup.Key);
                 await projectionsFlow.SendAsync(projectionGroup.ToList(), token);
             }
             projectionsFlow.Complete();
@@ -71,7 +69,7 @@ namespace Manta.Projections
         private TransformBlock<MessageRaw, MessageEnvelope> PrepareDeserializationFlow(CancellationToken token)
         {
             return new TransformBlock<MessageRaw, MessageEnvelope>(
-                async raw => await DeserializeTransformation(raw),
+                raw => DeserializeTransformation(raw),
                 new ExecutionDataflowBlockOptions
                 {
                     CancellationToken = token,
@@ -89,9 +87,9 @@ namespace Manta.Projections
             var consumer = ConsumeDeserializedEnvelopes(deserializeBlock, token).NotOnCapturedContext();
 
             await Task.WhenAll(fetcher, deserializeBlock.Completion);
-
+            
             var envelopes = await consumer;
-            Console.WriteLine("Received " + envelopes.Count);
+            Logger.Debug("Deserialzed {0} messages.", envelopes.Count);
             return envelopes;
         }
 
@@ -107,16 +105,16 @@ namespace Manta.Projections
             return envelopes;
         }
 
-        private Task<MessageEnvelope> DeserializeTransformation(MessageRaw raw)
+        private MessageEnvelope DeserializeTransformation(MessageRaw raw)
         {
             try
             {
                 var envelope = new MessageEnvelope
                 {
-                    Message = new object(),
+                    Message = Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload),
                     Meta = new Metadata
                     {
-                        CustomMetadata = null,
+                        CustomMetadata = Serializer.DeserializeMetadata(raw.MessageMetadataPayload),
                         CorrelationId = raw.CorrelationId,
                         MessageContractName = raw.MessageContractName,
                         MessageId = raw.MessageId,
@@ -127,15 +125,11 @@ namespace Manta.Projections
                     }
                 };
 
-                Console.WriteLine("Deserializing " + raw.MessagePosition);
-
-                //await Task.Delay(1);
-
-                return Task.FromResult(envelope);
+                return envelope;
             }
             catch(Exception e)
             {
-                // log exception
+                Console.WriteLine(e.Message);
                 return null;
             }
         }
@@ -192,7 +186,7 @@ namespace Manta.Projections
                 if (!projection.IsProjecting(messageType)) continue;
 
                 var context = new ProjectingContext(MaxProjectingRetries);
-                var dispatched = await DispatchProjection(projection, envelope, context);
+                var dispatched = await DispatchProjection(projection, envelope, context).NotOnCapturedContext();
                 if (dispatched)
                 {
                     projection.Checkpoint.Position = envelope.Meta.MessagePosition;
@@ -209,7 +203,7 @@ namespace Manta.Projections
             {
                 try
                 {
-                    await TryDispatch(projection, envelope, context);
+                    await TryDispatch(projection, envelope, context).NotOnCapturedContext();
                     return true;
                 }
                 catch (Exception ex)
@@ -241,4 +235,11 @@ namespace Manta.Projections
             await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context);
         }
     }
+
+    /*
+     * Group by message position range
+     * - Fetch
+     * - Deserialize
+     * - Dispatch batch
+     */
 }

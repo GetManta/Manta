@@ -2,6 +2,8 @@
 using System.Threading.Tasks;
 using Manta.Projections.Construct.TestProjections;
 using Manta.Projections.MsSql;
+using Manta.Projections.Runner;
+using Manta.Sceleton.Logging;
 
 namespace Manta.Projections.Construct
 {
@@ -17,29 +19,28 @@ namespace Manta.Projections.Construct
         private static async Task Execute()
         {
             Console.WriteLine("Starting...");
-            var projector = new Projector(
-                "StaticUniqueProjectorName",
-                new MsSqlDataSource(connectionString),
-                new MsSqlCheckpointRepository(connectionString));
+            var projector = new MsSqlProjector(
+                    "StaticUniqueProjectorName",
+                    connectionString)
+                .AddSerializer(new JilSerializer())
+                .AddProjections(typeof(TestProjection).Assembly, t => t.Namespace.StartsWith("Manta.Projections.Construct"))
+                .AddLogger(new NullLogger())
+                //.AddProjectionFactory(new ProjectionFactory(container))
+                .OnProjectingError(
+                    x =>
+                    {
+                        Console.WriteLine($"Projecting error at position {x.Envelope.Meta.MessagePosition}[{x.Context.RetryAttempt}] with message: {x.Exception.Message}.");
+                    });
+            
+            await projector.Run(); // Run once and exit when done
 
             // each projector has own config about fetching limits/timeouts, etc
 
-            // projector.AddLogger(new NLogLogger());
-            // projector.AddProjectionFactory(new ProjectionFactory(container));
-            // projector.AddProjection<TestProjection>();
 
-            projector.AddProjections(typeof(TestProjection).Assembly, t => t.Namespace.StartsWith("Manta.Projections.Construct"));
+            var runner = new ProjectorRunner();
+            runner.Add(projector);
 
-            projector.OnProjectingError(
-                (d, env, ctx, exc) =>
-                {
-                    Console.WriteLine("Projecting error " + exc.Message);
-                });
-
-            await projector.Run(); // Run once and exit when done
-
-            // projector.Start(settings); // Start running periodically
-            // projector.Stop(); // Stop running periodically
+            runner.Start();
 
             Console.WriteLine("Done. Press any key...");
             Console.ReadKey();
