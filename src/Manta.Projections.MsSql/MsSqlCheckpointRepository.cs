@@ -81,13 +81,12 @@ namespace Manta.Projections.MsSql
         {
             using (var cnn = new SqlConnection(_connectionString))
             {
-                var cmd = cnn.CreateCommand();
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandText = spuDeleteProjectionCheckpoint;
-
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                 foreach (var checkpoint in checkpoints)
                 {
+                    var cmd = cnn.CreateCommand();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandText = spuDeleteProjectionCheckpoint;
                     cmd.AddInputParam("@ProjectorName", DbType.AnsiString, checkpoint.ProjectorName, 128);
                     cmd.AddInputParam("@ProjectionName", DbType.AnsiString, checkpoint.ProjectionName, 128);
                     await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();

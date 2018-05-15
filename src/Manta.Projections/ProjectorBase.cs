@@ -66,7 +66,7 @@ namespace Manta.Projections
         public ProjectorBase AddProjections(Assembly assembly, Func<Type, bool> filter = null)
         {
             var projections = assembly.GetTypes().Where(t => typeof(Projection).IsAssignableFrom(t) && (filter?.Invoke(t) ?? true));
-            foreach (var type in projections.Where(filter))
+            foreach (var type in projections)
             {
                 AddProjection(type);
             }
@@ -137,6 +137,5 @@ namespace Manta.Projections
         {
             _onProjectionError?.Invoke(new ProjectingError(projection, envelope, context, exception));
         }
-
     }
 }

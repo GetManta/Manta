@@ -26,8 +26,7 @@ namespace Manta.Projections
         internal ProjectingContext(byte maxProjectingRetries)
         {
             MaxProjectingRetries = maxProjectingRetries;
-            ExceptionSolution = ExceptionSolutions.Retry;
-            RetryAttempt = 1;
+            Reset();
         }
 
         public byte MaxProjectingRetries { get; }
@@ -58,6 +57,12 @@ namespace Manta.Projections
         public bool CanRetry()
         {
             return RetryAttempt < MaxProjectingRetries;
+        }
+
+        internal void Reset()
+        {
+            ExceptionSolution = ExceptionSolutions.Retry;
+            RetryAttempt = 1;
         }
     }
 

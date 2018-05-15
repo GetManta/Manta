@@ -11,7 +11,8 @@ namespace Manta.Projections.Construct.TestProjections
     {
         public Task On(TestContracts.MessageOne m, Metadata meta, ProjectingContext context)
         {
-            throw new Exception("Should drop!");
+            //throw new Exception("Should drop!");
+            return Task.CompletedTask;
         }
 
         public Task On(TestContracts.MessageTwo m, Metadata meta, ProjectingContext context)
