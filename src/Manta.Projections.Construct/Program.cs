@@ -34,15 +34,21 @@ namespace Manta.Projections.Construct
             
             await projector.Run(); // Run once and exit when done
 
-            // each projector has own config about fetching limits/timeouts, etc
+            // each projector runner has own config about fetching limits/timeouts, etc
 
 
-            var runner = new ProjectorRunner();
-            runner.Add(projector);
+            //using (var runner = new ProjectorRunner())
+            //{
+            //    runner.Add(projector);
 
-            runner.Start();
+            //    runner.Start();
 
-            Console.WriteLine("Done. Press any key...");
+            //    Console.WriteLine("Press any key to stop runner...");
+            //    Console.ReadKey();
+
+            //    runner.Stop();
+            //}
+            Console.WriteLine("Done. Press any key to exit...");
             Console.ReadKey();
         }
     }
