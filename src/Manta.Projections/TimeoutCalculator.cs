@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Manta.Projections.Runner
+namespace Manta.Projections
 {
     internal class TimeoutCalculator
     {

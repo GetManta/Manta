@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using System.Timers;
 using Manta.Sceleton;
 
-namespace Manta.Projections.Runner
+namespace Manta.Projections
 {
-    public class ProjectorRunnerContext : IDisposable
+    internal class RunnerContext : IDisposable
     {
         private System.Timers.Timer _runnerTimer;
         private CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
@@ -18,7 +18,7 @@ namespace Manta.Projections.Runner
         public ProjectorBase Projector { get; }
         public TimeSpan RunForDuration { get; }
 
-        public ProjectorRunnerContext(ProjectorBase projector, TimeSpan? runForDuration = null)
+        public RunnerContext(ProjectorBase projector, TimeSpan? runForDuration = null)
         {
             Projector = projector;
             RunForDuration = runForDuration ?? TimeSpan.FromMinutes(1);

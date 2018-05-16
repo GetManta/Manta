@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Manta.Projections.Construct.TestProjections;
 using Manta.Projections.MsSql;
-using Manta.Projections.Runner;
 using Manta.Sceleton.Logging;
 
 namespace Manta.Projections.Construct
@@ -40,7 +39,7 @@ namespace Manta.Projections.Construct
         private static void ExecuteRunner(ProjectorBase projector)
         {
             // each projector runner has own config about fetching limits / timeouts, etc
-            using (var runner = new ProjectorRunner())
+            using (var runner = new Runner())
             {
                 runner.Add(projector);
 
