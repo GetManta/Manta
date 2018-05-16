@@ -4,8 +4,8 @@ namespace Manta
 {
     public class WrongExpectedVersionException : Exception
     {
-        public int ConflictedContract { get; private set; }
-        public int ConflictedVersion { get; private set; }
+        public int ConflictedContract { get; }
+        public int ConflictedVersion { get; }
 
         public WrongExpectedVersionException(string message, Exception inner = null)
             : base(message, inner) { }

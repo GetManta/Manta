@@ -54,7 +54,7 @@ namespace Manta
         /// <param name="messageVersion"></param>
         /// <param name="token">Cancelation token</param>
         /// <returns></returns>
-        Task<RecordedMessage?> ReadMessage(string stream, int messageVersion, CancellationToken token = default(CancellationToken));
+        Task<RecordedMessage> ReadMessage(string stream, int messageVersion, CancellationToken token = default(CancellationToken));
 
         /// <summary>
         /// 

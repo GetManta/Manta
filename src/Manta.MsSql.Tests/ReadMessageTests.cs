@@ -12,14 +12,14 @@ namespace Manta.MsSql.Tests
         [Fact]
         public async void Can_read_message()
         {
-            const byte expectedContractId = 2;
+            const string expectedContractName = "b";
             const string streamName = "test-123";
             var store = await GetMessageStore();
             var data = GetUncommitedMessages();
             await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
             var result = await store.Advanced.ReadMessage(streamName, 2).NotOnCapturedContext();
-            Assert.Equal(expectedContractId, result.Value.ContractId);
+            Assert.Equal(expectedContractName, result.ContractName);
         }
 
         [Fact]
@@ -60,13 +60,15 @@ namespace Manta.MsSql.Tests
 
         private static UncommittedMessages GetUncommitedMessages()
         {
+            var payload = new ArraySegment<byte>(new byte[] { 1, 2, 3 });
+
             return new UncommittedMessages(
                 Guid.NewGuid(),
                 new[]
                 {
-                    new MessageRecord(Guid.NewGuid(), 1, new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), 2, new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), 3, new byte[]{ 1, 2, 3 })
+                    new MessageRecord(Guid.NewGuid(), "a", payload),
+                    new MessageRecord(Guid.NewGuid(), "b", payload),
+                    new MessageRecord(Guid.NewGuid(), "a", payload)
                 });
         }
     }

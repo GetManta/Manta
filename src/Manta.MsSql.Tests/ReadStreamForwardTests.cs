@@ -53,13 +53,15 @@ namespace Manta.MsSql.Tests
 
         private static UncommittedMessages GetUncommitedMessages()
         {
+            var payload = new ArraySegment<byte>(new byte[] { 1, 2, 3 });
+
             return new UncommittedMessages(
                 Guid.NewGuid(),
                 new[]
                 {
-                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), 1, new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), 0, new byte[]{ 1, 2, 3 })
+                    new MessageRecord(Guid.NewGuid(), "a", payload),
+                    new MessageRecord(Guid.NewGuid(), "b", payload),
+                    new MessageRecord(Guid.NewGuid(), "a", payload)
                 });
         }
     }

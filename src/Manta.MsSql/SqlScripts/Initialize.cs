@@ -8,6 +8,6 @@
             Query = Resources.Read("Manta.MsSql.SqlScripts.Initialize.sql");
         }
 
-        public static string Query { get; private set; }
+        public static string Query { get; }
     }
 }

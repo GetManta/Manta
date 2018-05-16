@@ -68,7 +68,7 @@ namespace Manta.MsSql
         }
 
         /// <inheritdoc />
-        public async Task<RecordedMessage?> ReadMessage(string stream, int messageVersion, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<RecordedMessage> ReadMessage(string stream, int messageVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (messageVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Message version should be greater or equal 1.");
 
