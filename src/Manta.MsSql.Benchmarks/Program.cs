@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -32,9 +33,10 @@ namespace Manta.MsSql.Benchmarks
             Console.WriteLine("Preparing {0} stream(s) in memory...", streamsCounter);
             var streams = new List<UncommittedMessages>(streamsCounter);
             messagesCount = 0;
+            var pool = ArrayPool<byte>.Shared;
             for (var i = 0; i < streamsCounter; i++)
             {
-                var messages = GenerateMessages(maxEventsCounter);
+                var messages = GenerateMessages(maxEventsCounter, pool);
                 messagesCount += messages.Length;
                 streams.Add(new UncommittedMessages(SequentialGuid.NewGuid(), messages));
             }
@@ -42,16 +44,15 @@ namespace Manta.MsSql.Benchmarks
             return streams;
         }
 
-        private static MessageRecord[] GenerateMessages(int maxEventsCounter)
+        private static MessageRecord[] GenerateMessages(int maxEventsCounter, ArrayPool<byte> pool)
         {
             var msgs = new MessageRecord[rnd.Next(1, maxEventsCounter)];
-
             for (var i = 1; i <= msgs.Length; i++)
             {
                 var contract = TestContracts.RandomContract();
                 var contractName = TestContracts.GetContractNameByType(contract.GetType());
-
-                var payload = Serialize(contract);
+                
+                var payload = Serialize(contract, pool);
 
                 msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), contractName, payload);
             }
@@ -59,14 +60,23 @@ namespace Manta.MsSql.Benchmarks
             return msgs;
         }
 
-        private static ArraySegment<byte> Serialize(object contract)
+        private static ArraySegment<byte> Serialize(object contract, ArrayPool<byte> pool)
         {
-            using (var ms = new MemoryStream(256))
-            using (var writer = new StreamWriter(ms))
+            var array = pool.Rent(256);
+
+            try
             {
-                JSON.Serialize(contract, writer);
-                writer.Flush();
-                return !ms.TryGetBuffer(out var buffer) ? new ArraySegment<byte>() : buffer;
+                using (var ms = new MemoryStream(array))
+                using (var writer = new StreamWriter(ms))
+                {
+                    JSON.Serialize(contract, writer);
+                    writer.Flush();
+                    return new ArraySegment<byte>(array, 0, (int)ms.Position);
+                }
+            }
+            finally
+            {
+                pool.Return(array);
             }
         }
 
