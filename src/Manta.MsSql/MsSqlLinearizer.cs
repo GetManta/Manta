@@ -21,7 +21,7 @@ namespace Manta.MsSql
         public MsSqlLinearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan workDuration, int batchSize = 5000)
             : base(logger, timeout, workDuration)
         {
-            if (connectionString.IsNullOrEmpty()) throw new ArgumentNullException(nameof(connectionString));
+            if (connectionString.IsNullOrEmpty()) throw new ArgumentException("ConnectionString can not be null or empty.", nameof(connectionString));
 
             _connectionString = PrepareConnectionString(connectionString);
             BatchSize = batchSize;
@@ -45,8 +45,7 @@ namespace Manta.MsSql
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand(mantaLinearizeStreamsCommand, defaultCommandTimeoutInSeconds))
             {
-                var p = cmd.Parameters.Add(paramBatchSize, SqlDbType.Int);
-                p.Value = BatchSize;
+                cmd.AddInputParam(paramBatchSize, SqlDbType.Int, BatchSize);
 
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                 var result = await cmd.ExecuteScalarAsync(cancellationToken)
