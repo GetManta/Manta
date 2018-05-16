@@ -32,6 +32,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.Projections.MsSql", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.Projections.Construct", "Manta.Projections.Construct\Manta.Projections.Construct.csproj", "{E57E3CE6-78E9-4530-AA4A-04F2773ED066}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manta.Sceleton.Tests", "Manta.Sceleton.Tests\Manta.Sceleton.Tests.csproj", "{F7390E52-75D5-414B-A663-42AD419C8EBB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,6 +76,10 @@ Global
 		{E57E3CE6-78E9-4530-AA4A-04F2773ED066}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E57E3CE6-78E9-4530-AA4A-04F2773ED066}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E57E3CE6-78E9-4530-AA4A-04F2773ED066}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7390E52-75D5-414B-A663-42AD419C8EBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7390E52-75D5-414B-A663-42AD419C8EBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7390E52-75D5-414B-A663-42AD419C8EBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7390E52-75D5-414B-A663-42AD419C8EBB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -113,28 +113,43 @@ namespace Manta.Projections
         {
             try
             {
-                var envelope = new MessageEnvelope(
-                    new Metadata
-                    {
-                        CustomMetadata = Serializer.DeserializeMetadata(raw.MessageMetadataPayload),
-                        CorrelationId = raw.CorrelationId,
-                        MessageContractName = raw.MessageContractName,
-                        MessageId = raw.MessageId,
-                        MessagePosition = raw.MessagePosition,
-                        MessageVersion = raw.MessageVersion,
-                        StreamId = raw.StreamId,
-                        Timestamp = raw.Timestamp
-                    },
-                    Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload)
-                );
+                var message = Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload);
 
-                return envelope;
+                if (UpConverterFactory != null)
+                {
+                    message = UpConvert(message.GetType(), message);
+                }
+
+                var metadata = new Metadata
+                {
+                    CustomMetadata = Serializer.DeserializeMetadata(raw.MessageMetadataPayload),
+                    CorrelationId = raw.CorrelationId,
+                    MessageContractName = raw.MessageContractName,
+                    MessageId = raw.MessageId,
+                    MessagePosition = raw.MessagePosition,
+                    MessageVersion = raw.MessageVersion,
+                    StreamId = raw.StreamId,
+                    Timestamp = raw.Timestamp
+                };
+
+                return new MessageEnvelope(metadata, message);
             }
             catch(Exception e)
             {
                 Logger.Error(e.ToString());
                 return null;
             }
+        }
+
+        private object UpConvert(Type messageType, object message)
+        {
+            var upConverter = UpConverterFactory.CreateInstanceFor(messageType);
+            while (upConverter != null)
+            {
+                message = ((dynamic)upConverter).Convert((dynamic)message);
+                upConverter = UpConverterFactory.CreateInstanceFor(message.GetType());
+            }
+            return message;
         }
 
         private async Task<DispatchingResult> DispatchProjectionsRange(List<ProjectionDescriptor> descriptors, CancellationToken token)
@@ -182,6 +197,7 @@ namespace Manta.Projections
         private async Task<bool> Dispatch(IEnumerable<ProjectionDescriptor> projections, MessageEnvelope envelope, ProjectingContext context)
         {
             var messageType = envelope.Message.GetType();
+
             var anyDispatched = false;
             foreach (var projection in projections)
             {

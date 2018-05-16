@@ -34,7 +34,7 @@ namespace Manta.Sceleton.Converters
             return typeof(IUpConvertMessage).IsAssignableFrom(type);
         }
 
-        public IUpConvertMessage CreateInstance(Type messageType)
+        public IUpConvertMessage CreateInstanceFor(Type messageType)
         {
             return (!_converters.TryGetValue(messageType, out var converter)
                 ? null
