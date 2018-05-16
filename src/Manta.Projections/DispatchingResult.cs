@@ -4,11 +4,6 @@ namespace Manta.Projections
 {
     public class DispatchingResult
     {
-        public int EnvelopesCount { get; }
-        public long ElapsedMilliseconds { get; }
-        public bool AnyDispatched { get; }
-        public Exception Exception { get; }
-
         internal DispatchingResult(Exception exception, int envelopesCount, long elapsedMilliseconds, bool anyDispatched)
             : this(envelopesCount, elapsedMilliseconds, anyDispatched)
         {
@@ -20,6 +15,16 @@ namespace Manta.Projections
             EnvelopesCount = envelopesCount;
             ElapsedMilliseconds = swElapsedMilliseconds;
             AnyDispatched = anyDispatched;
+        }
+
+        public int EnvelopesCount { get; }
+        public long ElapsedMilliseconds { get; }
+        public bool AnyDispatched { get; }
+        public Exception Exception { get; }
+
+        public bool HaveCaughtException()
+        {
+            return Exception != null;
         }
     }
 }
