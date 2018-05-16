@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Manta.Sceleton;
+using Manta.Sceleton.Converters;
 using Manta.Sceleton.Logging;
 
 namespace Manta.Projections
@@ -32,6 +33,7 @@ namespace Manta.Projections
         public string Name { get; }
         public IStreamDataSource DataSource { get; }
         public ISerializer Serializer { get; }
+        public IUpConverterFactory UpConverterFactory { get; private set; }
         public byte MaxProjectingRetries { get; }
         public int BatchSize { get; }
         internal ILogger Logger { get; private set; }
@@ -71,6 +73,17 @@ namespace Manta.Projections
         public ProjectorBase AddLogger(ILogger logger)
         {
             Logger = logger ?? new NullLogger();
+            return this;
+        }
+
+        public ProjectorBase WithDefaultUpConverterFactory(params Assembly[] assemblies)
+        {
+            return WithUpConverterFactory(new DefaultUpConverterFactory(assemblies));
+        }
+
+        public ProjectorBase WithUpConverterFactory(IUpConverterFactory factory)
+        {
+            UpConverterFactory = factory;
             return this;
         }
 
