@@ -65,9 +65,4 @@ namespace Manta.Projections
             RetryAttempt = 1;
         }
     }
-
-    public class ProjectionException : Exception
-    {
-
-    }
 }

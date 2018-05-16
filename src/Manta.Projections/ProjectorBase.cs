@@ -13,15 +13,16 @@ namespace Manta.Projections
     {
         private readonly IProjectionCheckpointRepository _checkpointRepository;
         private readonly List<ProjectionDescriptor> _projectionDescriptors;
-        private Action<ProjectingError> _onProjectionError;
+        private Action<ProjectingException> _onProjectionError;
 
-        protected ProjectorBase(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, int batchSize)
+        protected ProjectorBase(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, ISerializer serializer, int batchSize)
         {
             _checkpointRepository = checkpointRepository;
             ProjectionFactory = new ActivatorProjectionFactory();
             Logger = new NullLogger();
             Name = name;
             DataSource = dataSource;
+            Serializer = serializer;
             BatchSize = batchSize;
             MaxProjectingRetries = 3;
 
@@ -30,16 +31,10 @@ namespace Manta.Projections
 
         public string Name { get; }
         public IStreamDataSource DataSource { get; }
-        public ISerializer Serializer { get; private set; }
+        public ISerializer Serializer { get; }
         public byte MaxProjectingRetries { get; }
         public int BatchSize { get; }
         internal ILogger Logger { get; private set; }
-
-        public ProjectorBase AddSerializer(ISerializer serializer)
-        {
-            Serializer = serializer;
-            return this;
-        }
 
         public ProjectorBase AddProjection<TProjection>() where TProjection : Projection
         {
@@ -79,7 +74,7 @@ namespace Manta.Projections
             return this;
         }
 
-        public ProjectorBase OnProjectingError(Action<ProjectingError> onProjectionError)
+        public ProjectorBase OnProjectingError(Action<ProjectingException> onProjectionError)
         {
             _onProjectionError = onProjectionError;
             return this;
@@ -133,9 +128,9 @@ namespace Manta.Projections
             await _checkpointRepository.Update(descriptors.Select(x => x.Checkpoint).ToList(), cancellationToken).NotOnCapturedContext();
         }
 
-        protected void ProjectingError(ProjectionDescriptor projection, MessageEnvelope envelope, ProjectingContext context, Exception exception)
+        protected void ProjectingError(ProjectingException exception)
         {
-            _onProjectionError?.Invoke(new ProjectingError(projection, envelope, context, exception));
+            _onProjectionError?.Invoke(exception);
         }
     }
 }

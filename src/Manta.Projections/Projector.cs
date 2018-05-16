@@ -5,13 +5,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Manta.Sceleton;
 
 namespace Manta.Projections
 {
     public class Projector : ProjectorBase
     {
-        public Projector(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, int batchSize = 1000)
-            : base(name, dataSource, checkpointRepository, batchSize) { }
+        public Projector(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, ISerializer serializer, int batchSize = 1000)
+            : base(name, dataSource, checkpointRepository, serializer, batchSize) { }
 
         internal override async Task<List<DispatchingResult>> RunOnce(CancellationToken token)
         {
@@ -210,9 +211,9 @@ namespace Manta.Projections
                     await TryDispatch(projection, envelope, context).NotOnCapturedContext();
                     return true;
                 }
-                catch (Exception ex)
+                catch (ProjectingException ex)
                 {
-                    ProjectingError(projection, envelope, context, ex);
+                    ProjectingError(ex);
                     if (context.ExceptionSolution == ExceptionSolutions.Ignore)
                     {
                         return true;
@@ -234,9 +235,16 @@ namespace Manta.Projections
 
         private async Task TryDispatch(ProjectionDescriptor projection, MessageEnvelope envelope, ProjectingContext context)
         {
-            var instance = ProjectionFactory.CreateProjectionInstance(projection.ProjectionType);
-            if (instance == null) throw new NullReferenceException($"Projection instance {projection.ProjectionType.FullName} is null.");
-            await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context);
+            try
+            {
+                var instance = ProjectionFactory.CreateProjectionInstance(projection.ProjectionType);
+                if (instance == null) throw new NullReferenceException($"Projection instance {projection.ProjectionType.FullName} is null.");
+                await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context);
+            }
+            catch(Exception e)
+            {
+                throw new ProjectingException(projection, envelope, context, e);
+            }
         }
     }
 
