@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Jil;
@@ -37,27 +38,25 @@ namespace Manta.Projections.Construct
             }
         }
 
-        public byte[] SerializeMessage(object message)
+        public ArraySegment<byte> SerializeMessage(object message)
         {
-            using (var mem = new MemoryStream(30))
+            using (var ms = new MemoryStream(256))
+            using (var writer = new StreamWriter(ms))
             {
-                using (var input = new StreamWriter(mem))
-                {
-                    JSON.Serialize(message, input, _options);
-                }
-                return mem.GetBuffer();
+                JSON.Serialize(message, writer, _options);
+                writer.Flush();
+                return !ms.TryGetBuffer(out var buffer) ? new ArraySegment<byte>() : buffer;
             }
         }
 
-        public byte[] SerializeMetadata(Dictionary<string, object> metadata)
+        public ArraySegment<byte> SerializeMetadata(Dictionary<string, object> metadata)
         {
-            using (var mem = new MemoryStream(30))
+            using (var ms = new MemoryStream(256))
+            using (var writer = new StreamWriter(ms))
             {
-                using (var input = new StreamWriter(mem))
-                {
-                    JSON.Serialize(metadata, input, _options);
-                }
-                return mem.GetBuffer();
+                JSON.Serialize(metadata, writer, _options);
+                writer.Flush();
+                return !ms.TryGetBuffer(out var buffer) ? new ArraySegment<byte>() : buffer;
             }
         }
     }

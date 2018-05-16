@@ -16,9 +16,12 @@ namespace Manta.MsSql.Tests
             const byte expected = 18;
             const string streamName1 = "test-123";
             const string streamName2 = "test-456";
+
             var store = await GetMessageStore();
+
             var data = GetUncommitedMessages();
             await store.AppendToStream(streamName1, ExpectedVersion.NoStream, data).NotOnCapturedContext();
+
             data = GetUncommitedMessages();
             await store.AppendToStream(streamName2, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
@@ -34,19 +37,21 @@ namespace Manta.MsSql.Tests
 
         private static UncommittedMessages GetUncommitedMessages()
         {
+            var payload = new ArraySegment<byte>(new byte[] { 1, 2, 3 });
+
             return new UncommittedMessages(
                 Guid.NewGuid(),
                 new[]
                 {
-                    new MessageRecord(Guid.NewGuid(), "a", new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), "b", new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), "a", new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), "a", new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), "b", new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), "a", new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), "a", new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), "b", new byte[]{ 1, 2, 3 }),
-                    new MessageRecord(Guid.NewGuid(), "a", new byte[]{ 1, 2, 3 })
+                    new MessageRecord(Guid.NewGuid(), "a", payload),
+                    new MessageRecord(Guid.NewGuid(), "b", payload),
+                    new MessageRecord(Guid.NewGuid(), "a", payload),
+                    new MessageRecord(Guid.NewGuid(), "a", payload),
+                    new MessageRecord(Guid.NewGuid(), "b", payload),
+                    new MessageRecord(Guid.NewGuid(), "a", payload),
+                    new MessageRecord(Guid.NewGuid(), "a", payload),
+                    new MessageRecord(Guid.NewGuid(), "b", payload),
+                    new MessageRecord(Guid.NewGuid(), "a", payload)
                 });
         }
     }

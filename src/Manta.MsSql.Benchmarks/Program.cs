@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -44,14 +45,29 @@ namespace Manta.MsSql.Benchmarks
         private static MessageRecord[] GenerateMessages(int maxEventsCounter)
         {
             var msgs = new MessageRecord[rnd.Next(1, maxEventsCounter)];
+
             for (var i = 1; i <= msgs.Length; i++)
             {
                 var contract = TestContracts.RandomContract();
-                var json = Encoding.UTF8.GetBytes(JSON.Serialize(contract));
                 var contractName = TestContracts.GetContractNameByType(contract.GetType());
-                msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), contractName, json);
+
+                var payload = Serialize(contract);
+
+                msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), contractName, payload);
             }
+
             return msgs;
+        }
+
+        private static ArraySegment<byte> Serialize(object contract)
+        {
+            using (var ms = new MemoryStream(256))
+            using (var writer = new StreamWriter(ms))
+            {
+                JSON.Serialize(contract, writer);
+                writer.Flush();
+                return !ms.TryGetBuffer(out var buffer) ? new ArraySegment<byte>() : buffer;
+            }
         }
 
         public static async Task TestMultithreaded(List<UncommittedMessages> streams, int messagesCount)
