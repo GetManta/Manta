@@ -12,13 +12,13 @@ using Manta.Sceleton;
 
 namespace Manta.MsSql.Benchmarks
 {
-    class Program
+    internal class Program
     {
         private const string connectionString = "data source=(local); initial catalog = mantabench; Integrated Security = True; Enlist = false;";
         private static readonly Random rnd = new Random();
         private static IMessageStore store;
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Console.WriteLine("Manta Benchmarks ({0}) {1} batching...", RuntimeInformation.FrameworkDescription, SqlClientSqlCommandSet.IsSqlCommandSetAvailable ? "With" : "Without");
             Console.WriteLine("{0} ({1})", RuntimeInformation.OSDescription, RuntimeInformation.OSArchitecture);
@@ -62,12 +62,12 @@ namespace Manta.MsSql.Benchmarks
 
         private static ArraySegment<byte> Serialize(object contract, ArrayPool<byte> pool)
         {
-            var array = pool.Rent(256);
+            var array = pool.Rent(128); // Serialized payload in this benchmark will never exceed 128 bytes
 
             try
             {
                 using (var ms = new MemoryStream(array))
-                using (var writer = new StreamWriter(ms))
+                using (var writer = new StreamWriter(ms, Encoding.UTF8))
                 {
                     JSON.Serialize(contract, writer);
                     writer.Flush();
