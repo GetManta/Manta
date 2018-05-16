@@ -40,6 +40,8 @@ namespace Manta.Projections.Construct
 
         public ArraySegment<byte> SerializeMessage(object message)
         {
+            if (message == null) throw new ArgumentNullException(nameof(message));
+
             using (var ms = new MemoryStream(256))
             using (var writer = new StreamWriter(ms))
             {
@@ -51,6 +53,8 @@ namespace Manta.Projections.Construct
 
         public ArraySegment<byte> SerializeMetadata(Dictionary<string, object> metadata)
         {
+            if (metadata == null) throw new ArgumentNullException(nameof(metadata));
+
             using (var ms = new MemoryStream(256))
             using (var writer = new StreamWriter(ms))
             {
