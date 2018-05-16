@@ -113,10 +113,8 @@ namespace Manta.Projections
         {
             try
             {
-                var envelope = new MessageEnvelope
-                {
-                    Message = Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload),
-                    Meta = new Metadata
+                var envelope = new MessageEnvelope(
+                    new Metadata
                     {
                         CustomMetadata = Serializer.DeserializeMetadata(raw.MessageMetadataPayload),
                         CorrelationId = raw.CorrelationId,
@@ -126,8 +124,9 @@ namespace Manta.Projections
                         MessageVersion = raw.MessageVersion,
                         StreamId = raw.StreamId,
                         Timestamp = raw.Timestamp
-                    }
-                };
+                    },
+                    Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload)
+                );
 
                 return envelope;
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using Manta.Projections.Construct.TestProjections;
 using Manta.Projections.MsSql;

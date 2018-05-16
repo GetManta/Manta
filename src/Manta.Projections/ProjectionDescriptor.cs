@@ -8,7 +8,7 @@ namespace Manta.Projections
 {
     public class ProjectionDescriptor
     {
-        private static readonly Type handlerType = typeof(IProject<>);
+        private static readonly Type handlerType = typeof(IProjecting<>);
 
         internal ProjectionDescriptor(Type projectionType)
         {

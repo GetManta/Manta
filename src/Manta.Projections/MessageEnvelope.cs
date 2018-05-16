@@ -2,7 +2,13 @@
 {
     public class MessageEnvelope
     {
-        public Metadata Meta { get; set; }
-        public object Message { get; set; }
+        public MessageEnvelope(Metadata meta, object message)
+        {
+            Meta = meta;
+            Message = message;
+        }
+
+        public Metadata Meta { get; }
+        public object Message { get; }
     }
 }
