@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jil" Version="2.15.4" />
+    <PackageReference Include="System.Buffers" Version="4.4.0" />
+    <PackageReference Include="System.Data.SqlLocalDb" Version="1.15.0" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Manta.MsSql\Manta.MsSql.csproj" />
+    <ProjectReference Include="..\Manta.Projections.MsSql\Manta.Projections.MsSql.csproj" />
+    <ProjectReference Include="..\Manta.Projections\Manta.Projections.csproj" />
+    <ProjectReference Include="..\Manta.Sceleton\Manta.Sceleton.csproj" />
+  </ItemGroup>
+
+</Project>
