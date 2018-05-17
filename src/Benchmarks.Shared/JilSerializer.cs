@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Benchmarks.Shared.TestProjections;
 using Jil;
-using Manta.Projections.Construct.TestProjections;
 using Manta.Sceleton;
 
-namespace Manta.Projections.Construct
+namespace Benchmarks.Shared
 {
     public class JilSerializer : ISerializer
     {
@@ -24,7 +24,7 @@ namespace Manta.Projections.Construct
             var type = TestContracts.GetTypeByContractName(messageContractName);
             using (var output = new StreamReader(new MemoryStream(payload), Encoding.UTF8))
             {
-                return JSON.Deserialize(output, type);
+                return JSON.Deserialize(output, type, _options);
             }
         }
 
@@ -34,7 +34,7 @@ namespace Manta.Projections.Construct
 
             using (var output = new StreamReader(new MemoryStream(payload), Encoding.UTF8))
             {
-                return JSON.Deserialize<Dictionary<string, object>>(output);
+                return JSON.Deserialize<Dictionary<string, object>>(output, _options);
             }
         }
 

@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <Compile Include="..\Manta.MsSql.Benchmarks\Program.cs" Link="Program.cs" />
-    <Compile Include="..\Manta.MsSql.Benchmarks\TestContracts.cs" Link="TestContracts.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Benchmarks.Shared\Benchmarks.Shared.csproj" />
     <ProjectReference Include="..\Manta.MsSql\Manta.MsSql.csproj" />
     <ProjectReference Include="..\Manta.Sceleton\Manta.Sceleton.csproj" />
     <ProjectReference Include="..\Manta\Manta.csproj" />
