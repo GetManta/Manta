@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Benchmarks.Shared\Benchmarks.Shared.csproj" />
     <ProjectReference Include="..\Manta.Projections.MsSql\Manta.Projections.MsSql.csproj" />
     <ProjectReference Include="..\Manta.Projections\Manta.Projections.csproj" />
   </ItemGroup>

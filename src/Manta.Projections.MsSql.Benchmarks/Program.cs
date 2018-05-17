@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Manta.Projections.Construct.TestProjections;
-using Manta.Projections.MsSql;
+using Benchmarks.Shared;
+using Manta.Projections.MsSql.Benchmarks.TestProjections;
 using Manta.Sceleton.Logging;
 
-namespace Manta.Projections.Construct
+namespace Manta.Projections.MsSql.Benchmarks
 {
     internal class Program
     {
@@ -14,16 +14,15 @@ namespace Manta.Projections.Construct
         {
             Console.WriteLine("Starting...");
             var projector = new MsSqlProjector("StaticUniqueProjectorName", connectionString, new JilSerializer())
-                .AddProjections(typeof(TestProjection).Assembly, t => t.Namespace.StartsWith("Manta.Projections.Construct"))
+                .AddProjections(typeof(TestProjection).Assembly, t => t.Namespace.StartsWith("Manta.Projections.MsSql.Benchmarks.TestProjections"))
                 .AddLogger(new NullLogger())
-                //.AddProjectionFactory(new ProjectionFactory(container))
                 .OnProjectingError(
                     x =>
                     {
-                        Console.WriteLine($"Projecting error at position {x.Envelope.Meta.MessagePosition}[{x.Context.RetryAttempt}] with message: {x.InnerException.Message}.");
+                        Console.WriteLine($"Projecting error at position {x.Envelope.Meta.MessagePosition}[Retry: {x.Context.RetryAttempt}] with message: {x.InnerException.Message}.");
                     });
 
-            ExecuteOnce(projector).Wait();
+            // ExecuteOnce(projector).Wait();
 
             ExecuteRunner(projector);
 

@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
-using Jil;
+using Benchmarks.Shared;
+using Benchmarks.Shared.TestProjections;
 using Manta.Sceleton;
 
 namespace Manta.MsSql.Benchmarks
@@ -17,14 +15,19 @@ namespace Manta.MsSql.Benchmarks
         private const string connectionString = "data source=(local); initial catalog = mantabench; Integrated Security = True; Enlist = false;";
         private static readonly Random rnd = new Random();
         private static IMessageStore store;
+        private static ISerializer serializer;
 
-        private static void Main(string[] args)
+        private static void Main()
         {
             Console.WriteLine("Manta Benchmarks ({0}) {1} batching...", RuntimeInformation.FrameworkDescription, SqlClientSqlCommandSet.IsSqlCommandSetAvailable ? "With" : "Without");
             Console.WriteLine("{0} ({1})", RuntimeInformation.OSDescription, RuntimeInformation.OSArchitecture);
+
+            serializer = new JilSerializer();
             var streams = GenerateStreams(250000, 10, out var messagesCount);
             store = new MsSqlMessageStore(new MsSqlMessageStoreSettings(connectionString));
+
             TestMultithreaded(streams, messagesCount).Wait();
+
             Console.ReadKey();
         }
 
@@ -33,10 +36,9 @@ namespace Manta.MsSql.Benchmarks
             Console.WriteLine("Preparing {0} stream(s) in memory...", streamsCounter);
             var streams = new List<UncommittedMessages>(streamsCounter);
             messagesCount = 0;
-            var pool = ArrayPool<byte>.Shared;
             for (var i = 0; i < streamsCounter; i++)
             {
-                var messages = GenerateMessages(maxEventsCounter, pool);
+                var messages = GenerateMessages(maxEventsCounter);
                 messagesCount += messages.Length;
                 streams.Add(new UncommittedMessages(SequentialGuid.NewGuid(), messages));
             }
@@ -44,40 +46,20 @@ namespace Manta.MsSql.Benchmarks
             return streams;
         }
 
-        private static MessageRecord[] GenerateMessages(int maxEventsCounter, ArrayPool<byte> pool)
+        private static MessageRecord[] GenerateMessages(int maxEventsCounter)
         {
             var msgs = new MessageRecord[rnd.Next(1, maxEventsCounter)];
             for (var i = 1; i <= msgs.Length; i++)
             {
                 var contract = TestContracts.RandomContract();
                 var contractName = TestContracts.GetContractNameByType(contract.GetType());
-                
-                var payload = Serialize(contract, pool);
+
+                var payload = serializer.SerializeMessage(contract);
 
                 msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), contractName, payload);
             }
 
             return msgs;
-        }
-
-        private static ArraySegment<byte> Serialize(object contract, ArrayPool<byte> pool)
-        {
-            var array = pool.Rent(128); // Serialized payload in this benchmark will never exceed 128 bytes
-
-            try
-            {
-                using (var ms = new MemoryStream(array))
-                using (var writer = new StreamWriter(ms, Encoding.UTF8))
-                {
-                    JSON.Serialize(contract, writer);
-                    writer.Flush();
-                    return new ArraySegment<byte>(array, 0, (int)ms.Position);
-                }
-            }
-            finally
-            {
-                pool.Return(array);
-            }
         }
 
         public static async Task TestMultithreaded(List<UncommittedMessages> streams, int messagesCount)

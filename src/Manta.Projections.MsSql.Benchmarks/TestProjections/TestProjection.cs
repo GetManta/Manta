@@ -1,16 +1,17 @@
 ﻿using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using Benchmarks.Shared.TestProjections;
 
-namespace Manta.Projections.Construct.TestProjections
+namespace Manta.Projections.MsSql.Benchmarks.TestProjections
 {
-    [DataContract(Name = "TestProjection2")]
-    public class TestProjection2 : Projection,
+    [DataContract(Name = "TestProjection")]
+    public class TestProjection : Projection,
         IProjecting<TestContracts.MessageOne>,
         IProjecting<TestContracts.MessageTwo>
     {
         public Task On(TestContracts.MessageOne m, Metadata meta, ProjectingContext context)
         {
-            //throw new Exception("Should drop!");
+            //Console.WriteLine("On: " + m.GetType().Name);
             return Task.CompletedTask;
         }
 

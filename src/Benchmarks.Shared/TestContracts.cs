@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Manta.MsSql.Benchmarks
+namespace Benchmarks.Shared.TestProjections
 {
     public class TestContracts
     {

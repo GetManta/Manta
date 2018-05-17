@@ -111,10 +111,15 @@ namespace Manta.Projections
 
         private static void PrintStats(List<DispatchingResult> results)
         {
-            var totalTime = (double)results.Sum(x => x.ElapsedMilliseconds) / 1000;
             var totalMessages = results.Sum(x => x.EnvelopesCount);
+            if (totalMessages == 0)
+            {
+                Console.Write(".");
+                return;
+            }
+            var totalTime = (double)results.Sum(x => x.ElapsedMilliseconds) / 1000;
             var avg = Math.Round(totalMessages / totalTime, 2, MidpointRounding.AwayFromZero);
-            Console.WriteLine($"Total time {totalTime}sec | Average processing {avg}/sec.");
+            Console.WriteLine($"Total time {totalTime}sec | Processed {totalMessages} | Average processing {avg}/sec");
         }
 
         internal abstract Task<List<DispatchingResult>> RunOnce(CancellationToken cancellationToken);
