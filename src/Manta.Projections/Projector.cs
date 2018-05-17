@@ -5,13 +5,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Manta.Sceleton;
 
 namespace Manta.Projections
 {
     public class Projector : ProjectorBase
     {
-        public Projector(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, int batchSize = 1000)
-            : base(name, dataSource, checkpointRepository, batchSize) { }
+        public Projector(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, ISerializer serializer, int batchSize = 1000)
+            : base(name, dataSource, checkpointRepository, serializer, batchSize) { }
 
         internal override async Task<List<DispatchingResult>> RunOnce(CancellationToken token)
         {
@@ -112,29 +113,43 @@ namespace Manta.Projections
         {
             try
             {
-                var envelope = new MessageEnvelope
+                var message = Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload);
+
+                if (UpConverterFactory != null)
                 {
-                    Message = Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload),
-                    Meta = new Metadata
-                    {
-                        CustomMetadata = Serializer.DeserializeMetadata(raw.MessageMetadataPayload),
-                        CorrelationId = raw.CorrelationId,
-                        MessageContractName = raw.MessageContractName,
-                        MessageId = raw.MessageId,
-                        MessagePosition = raw.MessagePosition,
-                        MessageVersion = raw.MessageVersion,
-                        StreamId = raw.StreamId,
-                        Timestamp = raw.Timestamp
-                    }
+                    message = UpConvert(message.GetType(), message);
+                }
+
+                var metadata = new Metadata
+                {
+                    CustomMetadata = Serializer.DeserializeMetadata(raw.MessageMetadataPayload),
+                    CorrelationId = raw.CorrelationId,
+                    MessageContractName = raw.MessageContractName,
+                    MessageId = raw.MessageId,
+                    MessagePosition = raw.MessagePosition,
+                    MessageVersion = raw.MessageVersion,
+                    StreamId = raw.StreamId,
+                    Timestamp = raw.Timestamp
                 };
 
-                return envelope;
+                return new MessageEnvelope(metadata, message);
             }
             catch(Exception e)
             {
                 Logger.Error(e.ToString());
                 return null;
             }
+        }
+
+        private object UpConvert(Type messageType, object message)
+        {
+            var upConverter = UpConverterFactory.CreateInstanceFor(messageType);
+            while (upConverter != null)
+            {
+                message = ((dynamic)upConverter).Convert((dynamic)message);
+                upConverter = UpConverterFactory.CreateInstanceFor(message.GetType());
+            }
+            return message;
         }
 
         private async Task<DispatchingResult> DispatchProjectionsRange(List<ProjectionDescriptor> descriptors, CancellationToken token)
@@ -182,6 +197,7 @@ namespace Manta.Projections
         private async Task<bool> Dispatch(IEnumerable<ProjectionDescriptor> projections, MessageEnvelope envelope, ProjectingContext context)
         {
             var messageType = envelope.Message.GetType();
+
             var anyDispatched = false;
             foreach (var projection in projections)
             {
@@ -210,9 +226,9 @@ namespace Manta.Projections
                     await TryDispatch(projection, envelope, context).NotOnCapturedContext();
                     return true;
                 }
-                catch (Exception ex)
+                catch (ProjectingException ex)
                 {
-                    ProjectingError(projection, envelope, context, ex);
+                    ProjectingError(ex);
                     if (context.ExceptionSolution == ExceptionSolutions.Ignore)
                     {
                         return true;
@@ -234,9 +250,16 @@ namespace Manta.Projections
 
         private async Task TryDispatch(ProjectionDescriptor projection, MessageEnvelope envelope, ProjectingContext context)
         {
-            var instance = ProjectionFactory.CreateProjectionInstance(projection.ProjectionType);
-            if (instance == null) throw new NullReferenceException($"Projection instance {projection.ProjectionType.FullName} is null.");
-            await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context);
+            try
+            {
+                var instance = ProjectionFactory.CreateProjectionInstance(projection.ProjectionType);
+                if (instance == null) throw new NullReferenceException($"Projection instance {projection.ProjectionType.FullName} is null.");
+                await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context);
+            }
+            catch(Exception e)
+            {
+                throw new ProjectingException(projection, envelope, context, e);
+            }
         }
     }
 

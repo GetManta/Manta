@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -11,13 +12,13 @@ using Manta.Sceleton;
 
 namespace Manta.MsSql.Benchmarks
 {
-    class Program
+    internal class Program
     {
         private const string connectionString = "data source=(local); initial catalog = mantabench; Integrated Security = True; Enlist = false;";
         private static readonly Random rnd = new Random();
         private static IMessageStore store;
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Console.WriteLine("Manta Benchmarks ({0}) {1} batching...", RuntimeInformation.FrameworkDescription, SqlClientSqlCommandSet.IsSqlCommandSetAvailable ? "With" : "Without");
             Console.WriteLine("{0} ({1})", RuntimeInformation.OSDescription, RuntimeInformation.OSArchitecture);
@@ -32,9 +33,10 @@ namespace Manta.MsSql.Benchmarks
             Console.WriteLine("Preparing {0} stream(s) in memory...", streamsCounter);
             var streams = new List<UncommittedMessages>(streamsCounter);
             messagesCount = 0;
+            var pool = ArrayPool<byte>.Shared;
             for (var i = 0; i < streamsCounter; i++)
             {
-                var messages = GenerateMessages(maxEventsCounter);
+                var messages = GenerateMessages(maxEventsCounter, pool);
                 messagesCount += messages.Length;
                 streams.Add(new UncommittedMessages(SequentialGuid.NewGuid(), messages));
             }
@@ -42,16 +44,15 @@ namespace Manta.MsSql.Benchmarks
             return streams;
         }
 
-        private static MessageRecord[] GenerateMessages(int maxEventsCounter)
+        private static MessageRecord[] GenerateMessages(int maxEventsCounter, ArrayPool<byte> pool)
         {
             var msgs = new MessageRecord[rnd.Next(1, maxEventsCounter)];
-
             for (var i = 1; i <= msgs.Length; i++)
             {
                 var contract = TestContracts.RandomContract();
                 var contractName = TestContracts.GetContractNameByType(contract.GetType());
-
-                var payload = Serialize(contract);
+                
+                var payload = Serialize(contract, pool);
 
                 msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), contractName, payload);
             }
@@ -59,14 +60,23 @@ namespace Manta.MsSql.Benchmarks
             return msgs;
         }
 
-        private static ArraySegment<byte> Serialize(object contract)
+        private static ArraySegment<byte> Serialize(object contract, ArrayPool<byte> pool)
         {
-            using (var ms = new MemoryStream(256))
-            using (var writer = new StreamWriter(ms))
+            var array = pool.Rent(128); // Serialized payload in this benchmark will never exceed 128 bytes
+
+            try
             {
-                JSON.Serialize(contract, writer);
-                writer.Flush();
-                return !ms.TryGetBuffer(out var buffer) ? new ArraySegment<byte>() : buffer;
+                using (var ms = new MemoryStream(array))
+                using (var writer = new StreamWriter(ms, Encoding.UTF8))
+                {
+                    JSON.Serialize(contract, writer);
+                    writer.Flush();
+                    return new ArraySegment<byte>(array, 0, (int)ms.Position);
+                }
+            }
+            finally
+            {
+                pool.Return(array);
             }
         }
 

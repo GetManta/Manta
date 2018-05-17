@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace Manta.Projections.Construct.TestProjections
+namespace Manta.Projections.MsSql.Tests.TestProjections
 {
     [DataContract(Name = "TestProjection")]
     public class TestProjection : Projection,

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Jil;
-using Manta.Projections.Construct.TestProjections;
+using Manta.Projections.MsSql.Tests.TestProjections;
 using Manta.Sceleton;
 
-namespace Manta.Projections.Construct
+namespace Manta.Projections.MsSql.Tests
 {
     public class JilSerializer : ISerializer
     {

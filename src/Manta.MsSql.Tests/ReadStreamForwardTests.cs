@@ -13,7 +13,7 @@ namespace Manta.MsSql.Tests
         [Fact]
         public async void Can_read_forward_all_messages()
         {
-            const byte expectedVersion = 3;
+            const int expectedVersion = 3;
             const string streamName = "test-123";
             var store = await GetMessageStore();
             var data = GetUncommitedMessages();
@@ -26,8 +26,8 @@ namespace Manta.MsSql.Tests
         [Fact]
         public async void Can_read_forward_from_given_version()
         {
-            const byte expectedCount = 2;
-            const byte expectedVersion = 3;
+            const int expectedCount = 2;
+            const int expectedVersion = 3;
             const string streamName = "test-123";
             var store = await GetMessageStore();
             var data = GetUncommitedMessages();
@@ -41,13 +41,12 @@ namespace Manta.MsSql.Tests
         [Fact]
         public async void Can_read_forward_from_empty_stream()
         {
-            const byte expectedCount = 0;
             const byte expectedVersion = 3;
             const string streamName = "test-1234";
             var store = await GetMessageStore();
 
             var result = await store.ReadStreamForward(streamName, expectedVersion).NotOnCapturedContext();
-            Assert.Equal(expectedCount, result.Messages.Length);
+            Assert.Empty(result.Messages);
             Assert.True(result.IsStreamNotFound());
         }
 

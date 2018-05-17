@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Manta.Projections.Runner
+namespace Manta.Projections
 {
-    public class ProjectorRunner : IDisposable
+    public class Runner : IDisposable
     {
-        private readonly List<ProjectorRunnerContext> _projectors;
+        private readonly List<RunnerContext> _projectors;
 
-        public ProjectorRunner()
+        public Runner()
         {
-            _projectors = new List<ProjectorRunnerContext>();
+            _projectors = new List<RunnerContext>();
         }
 
         public void Add(ProjectorBase projector, TimeSpan? runForDuration = null)
         {
-            _projectors.Add(new ProjectorRunnerContext(projector, runForDuration));
+            _projectors.Add(new RunnerContext(projector, runForDuration));
         }
 
         public void Start()

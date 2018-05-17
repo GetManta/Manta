@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Manta.Projections.Runner
+namespace Manta.Projections
 {
     internal class TimeoutCalculator
     {
@@ -20,19 +20,19 @@ namespace Manta.Projections.Runner
         };
 
         private short _notDispatchingCounter;
-        private readonly TimeSpan _pollerStaticTimeout;
+        private readonly TimeSpan _staticTimeout;
 
-        public TimeoutCalculator(TimeSpan pollerStaticTimeout)
+        public TimeoutCalculator(TimeSpan staticTimeout)
         {
-            _pollerStaticTimeout = pollerStaticTimeout;
+            _staticTimeout = staticTimeout;
         }
 
         public double CalculateNext(bool anyDispatched = true)
         {
-            if (_pollerStaticTimeout != TimeSpan.Zero)
+            if (_staticTimeout != TimeSpan.Zero)
             {
                 _notDispatchingCounter = 0;
-                return anyDispatched ? minTimeoutValue : _pollerStaticTimeout.TotalMilliseconds;
+                return anyDispatched ? minTimeoutValue : _staticTimeout.TotalMilliseconds;
             }
 
             if (!anyDispatched)
