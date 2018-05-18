@@ -35,7 +35,21 @@ namespace Manta.MsSql.Tests.Infrastructure
         public async Task<IMessageStore> GetMessageStore(bool batching = true)
         {
             if (!_databaseCreated) await CreateDatabase(GetLocation()).NotOnCapturedContext();
+            await ClearDatabase();
             return new MsSqlMessageStore(new MsSqlMessageStoreSettings(ConnectionString, batching));
+        }
+
+        private async Task ClearDatabase()
+        {
+            using (var connection = new SqlConnection(ConnectionString))
+            {
+                await connection.OpenAsync().NotOnCapturedContext();
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = @"TRUNCATE TABLE Streams;UPDATE StreamsStats SET MaxMessagePosition = 0, CountOfAllMessages = 0";
+                    await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+                }
+            }
         }
 
         private static string GetLocation()

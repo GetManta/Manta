@@ -36,9 +36,23 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
         public async Task<Projector> GetProjector(Action<ProjectorBase> cfg)
         {
             if (!_databaseCreated) await CreateDatabase(GetLocation()).NotOnCapturedContext();
+            await ClearDatabase();
             var projector = new MsSqlProjector("uniqueProjectorName", ConnectionString, new JilSerializer());
             cfg?.Invoke(projector);
             return projector;
+        }
+
+        private async Task ClearDatabase()
+        {
+            using (var connection = new SqlConnection(ConnectionString))
+            {
+                await connection.OpenAsync().NotOnCapturedContext();
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = @"TRUNCATE TABLE Streams;TRUNCATE TABLE StreamsProjectionCheckpoints;UPDATE StreamsStats SET MaxMessagePosition = 0, CountOfAllMessages = 0";
+                    await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+                }
+            }
         }
 
         private static string GetLocation()
