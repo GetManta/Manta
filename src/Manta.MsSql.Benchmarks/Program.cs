@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Benchmarks.Shared;
-using Benchmarks.Shared.TestProjections;
 using Manta.Sceleton;
 
 namespace Manta.MsSql.Benchmarks

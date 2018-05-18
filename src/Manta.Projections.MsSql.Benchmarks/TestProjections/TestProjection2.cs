@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 using System.Threading.Tasks;
-using Benchmarks.Shared.TestProjections;
+using Benchmarks.Shared;
 
 namespace Manta.Projections.MsSql.Benchmarks.TestProjections
 {

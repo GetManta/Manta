@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Benchmarks.Shared.TestProjections
+namespace Benchmarks.Shared
 {
     public class TestContracts
     {

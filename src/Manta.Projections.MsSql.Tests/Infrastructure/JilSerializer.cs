@@ -6,7 +6,7 @@ using Jil;
 using Manta.Projections.MsSql.Tests.TestProjections;
 using Manta.Sceleton;
 
-namespace Manta.Projections.MsSql.Tests
+namespace Manta.Projections.MsSql.Tests.Infrastructure
 {
     public class JilSerializer : ISerializer
     {
