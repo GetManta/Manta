@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0"?>
 <package xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-        <id>Manta</id>
-        <title>Manta</title>
+        <id>Manta.Projections.MsSql</id>
+        <title>Manta.Projections.MsSql</title>
         <version>$version$</version>
         <authors>Dariusz Lenartowicz</authors>
         <owners>Dariusz Lenartowicz</owners>
         <projectUrl>https://github.com/getmanta/manta</projectUrl>
         <licenseUrl>https://github.com/getmanta/manta/blob/master/License.txt</licenseUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>Event store library for .NET Core based on rdbms persistance.</description>
+        <description>MS SQL Server implementation for Manta projections engine.</description>
         <tags>
             streams
             event-store
@@ -21,7 +21,6 @@
             mssql
             ms-sql-server
             cqrs-es
-            postresql
         </tags>
     </metadata>
 </package>
