@@ -244,8 +244,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DELETE FROM [Streams] WHERE [Name] = @StreamName AND [MessageVersion] <= @ToVersion AND
-        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = @StreamName ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+    DELETE s FROM [Streams] s WHERE s.[Name] = @StreamName AND s.[MessageVersion] <= @ToVersion AND
+        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = s.[Name] ORDER BY [MessageVersion] DESC) = @ExpectedVersion
 
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
@@ -263,8 +263,11 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DELETE FROM [Streams] WHERE [Name] = @StreamName AND [Timestamp] <= @ToCreationDate AND
-        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = @StreamName AND [Timestamp] <= @ToCreationDate ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+    IF(SELECT COUNT(1) FROM [Streams] s WHERE s.[Name] = @StreamName AND s.[Timestamp] <= @ToCreationDate) = 0
+        RETURN;
+
+    DELETE s FROM [Streams] s WHERE s.[Name] = @StreamName AND s.[Timestamp] <= @ToCreationDate AND
+        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = s.[Name] ORDER BY [MessageVersion] DESC) = @ExpectedVersion
 
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
