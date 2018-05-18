@@ -19,7 +19,7 @@ namespace Manta.MsSql.Tests
 
             await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
-            var exception = await Record.ExceptionAsync(async () => await store.Advanced.TruncateStream(streamName, data.Messages.Length, DateTime.Now.AddSeconds(-5)).NotOnCapturedContext());
+            var exception = await Record.ExceptionAsync(async () => await store.Advanced.TruncateStream(streamName, data.Messages.Length, DateTime.UtcNow.AddSeconds(-5)).NotOnCapturedContext());
 
             Assert.Null(exception);
         }
@@ -33,7 +33,7 @@ namespace Manta.MsSql.Tests
 
             await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext();
 
-            var exception = await Record.ExceptionAsync(async () => await store.Advanced.TruncateStream(streamName, expectedVersion: 1, toCreationDate: DateTime.Now.AddSeconds(5)).NotOnCapturedContext());
+            var exception = await Record.ExceptionAsync(async () => await store.Advanced.TruncateStream(streamName, expectedVersion: 1, toCreationDate: DateTime.UtcNow.AddSeconds(5)).NotOnCapturedContext());
 
             Assert.NotNull(exception);
         }
@@ -47,7 +47,7 @@ namespace Manta.MsSql.Tests
             await Assert.ThrowsAsync<InvalidOperationException>(
                 async () =>
                 {
-                    await store.Advanced.TruncateStream(streamName, expectedVersion: ExpectedVersion.NoStream, toCreationDate: DateTime.Now.AddSeconds(-5)).NotOnCapturedContext();
+                    await store.Advanced.TruncateStream(streamName, expectedVersion: ExpectedVersion.NoStream, toCreationDate: DateTime.UtcNow.AddSeconds(-5)).NotOnCapturedContext();
                 });
         }
 
