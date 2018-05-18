@@ -2,7 +2,7 @@
 
 namespace Manta
 {
-    public class MessageRecord
+    public struct MessageRecord
     {
         public MessageRecord(Guid messageId, string contractName, ArraySegment<byte> payload)
         {
