@@ -11,6 +11,7 @@ namespace Manta.MsSql
         private const string paramMessageVersion = "@MessageVersion";
         private const string paramMessageId = "@MessageId";
         private const string paramPayload = "@Payload";
+        private const string paramMetadataPayload = "@MetadataPayload";
 
         private const string mantaAppendAnyVersionCommand = "mantaAppendAnyVersion";
         private const string mantaAppendExpectedVersionCommand = "mantaAppendExpectedVersion";
@@ -24,7 +25,8 @@ namespace Manta.MsSql
                 .AddInputParam(paramCorrelationId, SqlDbType.UniqueIdentifier, data.CorrelationId)
                 .AddInputParam(paramContractName, SqlDbType.VarChar, msg.ContractName, SqlClientExtensions.DefaultContractNameLength)
                 .AddInputParam(paramMessageId, SqlDbType.UniqueIdentifier, msg.MessageId)
-                .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload);
+                .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload)
+                .AddInputParam(paramMetadataPayload, SqlDbType.VarBinary, data.Metadata);
         }
 
         public static SqlCommand CreateCommandToAppendingWithExpectedVersion(this SqlConnection cnn, string name, UncommittedMessages data, MessageRecord msg, int messageVersion)
@@ -36,7 +38,8 @@ namespace Manta.MsSql
                 .AddInputParam(paramContractName, SqlDbType.VarChar, msg.ContractName, SqlClientExtensions.DefaultContractNameLength)
                 .AddInputParam(paramMessageId, SqlDbType.UniqueIdentifier, msg.MessageId)
                 .AddInputParam(paramMessageVersion, SqlDbType.Int, messageVersion)
-                .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload);
+                .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload)
+                .AddInputParam(paramMetadataPayload, SqlDbType.VarBinary, data.Metadata);
         }
 
         public static SqlCommand CreateCommandToAppendingWithNoStream(this SqlConnection cnn, string name, UncommittedMessages data, MessageRecord msg)
@@ -47,7 +50,8 @@ namespace Manta.MsSql
                 .AddInputParam(paramCorrelationId, SqlDbType.UniqueIdentifier, data.CorrelationId)
                 .AddInputParam(paramContractName, SqlDbType.VarChar, msg.ContractName, SqlClientExtensions.DefaultContractNameLength)
                 .AddInputParam(paramMessageId, SqlDbType.UniqueIdentifier, msg.MessageId)
-                .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload);
+                .AddInputParam(paramPayload, SqlDbType.VarBinary, msg.Payload)
+                .AddInputParam(paramMetadataPayload, SqlDbType.VarBinary, data.Metadata);
         }
     }
 }
