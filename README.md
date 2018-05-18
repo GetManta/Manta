@@ -6,6 +6,8 @@ Event store library for .NET Core based on rdbms persistance.
 # Status
 NOT READY FOR PRODUCTION YET
 
+[![Build status](https://ci.appveyor.com/api/projects/status/rmy0b570j1ur2c58/branch/master?svg=true)](https://ci.appveyor.com/project/dario-l/manta/branch/master)
+
 # Installation
 Manta is not available on NuGet, yet.
 
@@ -22,22 +24,26 @@ You can download source code from this repository and compile under Visual Studi
  - Support any kind of message serialization
  - Support any kind of loggers through ILogger interface
  - MS SQL Server persistance implementation (with single-writer pattern for MS SQL Server implementation)
+ - Support up-conversion of events to the newest versi
 
-last but not least
+last but not least, performance
 
- - performance - on i5 2500k with SSD benchmarked ~15,000 writes per second and ~30,000 reads per second
+ - on i5 2500k with SSD benchmarked ~15,000 writes per second and ~30,000 reads per second
+ - on i7 8700k with SSD benchmarked ~23,000 writes per second and ~50,000 reads per second
+
+*SSD disk speed is an important factor*
 
 ### To be done
  - Manta - InMemory implementation
  - Manta.PostgreSql - [PostgreSql](https://www.postgresql.org/) implementation
  - Manta.MySql - [MySql](https://www.mysql.com/) implementation
+ - Manta.SqLite - [SqLite](https://www.sqlite.org/) implementation
 
 ### Other
  - Manta.Subscriptions
    - Subscriptions to one or many event stream sources for processmanagers/projections/others
  - Manta.Domain (as different repository)
    - Manta.Domain - Conflict resolver
-   - Manta.Domain - Support up-conversion of events to the newest version
 
 
 # Getting started
@@ -60,8 +66,8 @@ public class SomeEvent
 
 // Basic example of usage
 
-int contractId = GetContractIdentifierBasedOnEventType(ev.GetType());
-byte[] payload = SerializeEventUsingProtoBuf(ev); // You can use any type of serialization method
+string contractName = GetContractNameBasedOnEventType(ev.GetType());
+ArraySegment<byte> payload = SerializeEventUsingProtoBuf(ev); // You can use any type of serialization method
 
 var data = new UncommittedMessages(
     SequentialGuid.NewGuid(), // correlationId
@@ -74,10 +80,9 @@ var data = new UncommittedMessages(
     });
 
 await store.AppendToStream(
-    SequentialGuid.NewGuid().ToString("N"),
+    "stream-1",
     ExpectedVersion.NoStream,
     data);
-
 ```
 
 # Documentation
