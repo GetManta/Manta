@@ -69,12 +69,14 @@ namespace Manta.Projections
                     }
 
                     _runnerTimer.Interval = _timeoutCalc.CalculateNext(anyDispatched);
-                    _runnerTimer.Start();
                 }
                 catch (Exception e)
                 {
                     Projector.Logger.Fatal("Running projector '{0}' error.\r\n\t{1}", Projector.Name, e.Message);
-                    Stop();
+                }
+                finally
+                {
+                    _runnerTimer.Start();
                 }
             }
         }

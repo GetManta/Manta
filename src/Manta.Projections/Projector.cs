@@ -81,13 +81,13 @@ namespace Manta.Projections
 
         private async Task<List<MessageEnvelope>> DeserializeEnvelopes(List<ProjectionDescriptor> descriptors, CancellationToken token)
         {
-            var deserializeBlock = PrepareDeserializationFlow(token);
+            var deserializationFlow = PrepareDeserializationFlow(token);
 
             var fromPosition = descriptors.Min(x => x.Checkpoint.Position);
-            var fetcher = DataSource.Fetch(deserializeBlock, fromPosition, BatchSize, token);
-            var consumer = ConsumeDeserializedEnvelopes(deserializeBlock, token).NotOnCapturedContext();
+            var fetcher = DataSource.Fetch(deserializationFlow, fromPosition, BatchSize, token);
+            var consumer = ConsumeDeserializedEnvelopes(deserializationFlow, token).NotOnCapturedContext();
 
-            await Task.WhenAll(fetcher, deserializeBlock.Completion);
+            await Task.WhenAll(fetcher, deserializationFlow.Completion);
             
             var envelopes = await consumer;
             Logger.Debug("Deserialized {0} messages.", envelopes.Count);
@@ -111,34 +111,26 @@ namespace Manta.Projections
 
         private MessageEnvelope DeserializeTransformation(MessageRaw raw)
         {
-            try
+            var message = Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload);
+
+            if (UpConverterFactory != null)
             {
-                var message = Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload);
-
-                if (UpConverterFactory != null)
-                {
-                    message = UpConvert(message.GetType(), message);
-                }
-
-                var metadata = new Metadata
-                {
-                    CustomMetadata = Serializer.DeserializeMetadata(raw.MessageMetadataPayload),
-                    CorrelationId = raw.CorrelationId,
-                    MessageContractName = raw.MessageContractName,
-                    MessageId = raw.MessageId,
-                    MessagePosition = raw.MessagePosition,
-                    MessageVersion = raw.MessageVersion,
-                    StreamId = raw.StreamId,
-                    Timestamp = raw.Timestamp
-                };
-
-                return new MessageEnvelope(metadata, message);
+                message = UpConvert(message.GetType(), message);
             }
-            catch(Exception e)
+
+            var metadata = new Metadata
             {
-                Logger.Error(e.ToString());
-                return null;
-            }
+                CustomMetadata = Serializer.DeserializeMetadata(raw.MessageMetadataPayload),
+                CorrelationId = raw.CorrelationId,
+                MessageContractName = raw.MessageContractName,
+                MessageId = raw.MessageId,
+                MessagePosition = raw.MessagePosition,
+                MessageVersion = raw.MessageVersion,
+                StreamId = raw.StreamId,
+                Timestamp = raw.Timestamp
+            };
+
+            return new MessageEnvelope(metadata, message);
         }
 
         private object UpConvert(Type messageType, object message)

@@ -6,16 +6,16 @@ namespace Manta.Projections
     internal class TimeoutCalculator
     {
         private const short minTimeoutValue = 20;
-        private const short maxTimeoutLevel = 10000;
+        private const short maxTimeoutLevel = 500;
         private static readonly Dictionary<short, short> timeoutLevels = new Dictionary<short, short>
         {
             // count | ms
             { maxTimeoutLevel, 1000 },
-            { 5000, 500 },
-            { 2000, 250 },
-            { 1500, 100 },
-            { 1000, 60 },
-            { 500, 40 },
+            { 300, 500 },
+            { 400, 250 },
+            { 500, 100 },
+            { 500, 60 },
+            { 200, 40 },
             { 0, minTimeoutValue }
         };
 
