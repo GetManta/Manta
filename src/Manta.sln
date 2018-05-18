@@ -11,6 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.MsSql", "Manta.MsSql\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7439BDD4-BA3E-4C5E-B5EE-736BF4352326}"
 	ProjectSection(SolutionItems) = preProject
+		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
 		NuGet.config = NuGet.config
 		..\README.md = ..\README.md
 		SharedAssemblyInfo.cs = SharedAssemblyInfo.cs
@@ -20,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.MsSql.Tests", "Manta.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.MsSql.Benchmarks.NetCore", "Manta.MsSql.Benchmarks.NetCore\Manta.MsSql.Benchmarks.NetCore.csproj", "{AAA4405E-0116-405C-97A8-61B8AFDB1092}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manta.MsSql.Benchmarks", "Manta.MsSql.Benchmarks\Manta.MsSql.Benchmarks.csproj", "{41ED97BB-F6A8-4D5D-B6CA-51039C6A818B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.MsSql.Benchmarks", "Manta.MsSql.Benchmarks\Manta.MsSql.Benchmarks.csproj", "{41ED97BB-F6A8-4D5D-B6CA-51039C6A818B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", "{2A3B6A4A-79B6-4DCC-AA86-1A6FC3EF9B13}"
 EndProject
@@ -36,7 +37,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.Sceleton.Tests", "Man
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Manta.Projections.MsSql.Tests", "Manta.Projections.MsSql.Tests\Manta.Projections.MsSql.Tests.csproj", "{41F33194-6B61-47A0-B57B-F5D8608E6C88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks.Shared", "Benchmarks.Shared\Benchmarks.Shared.csproj", "{6F003F25-0F3A-4201-8E83-893AC551EAE1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks.Shared", "Benchmarks.Shared\Benchmarks.Shared.csproj", "{6F003F25-0F3A-4201-8E83-893AC551EAE1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
