@@ -86,7 +86,7 @@ await store.AppendToStream(
 ```
 
 # Documentation
-If you're looking for documentation, you can find it [here](https://github.com/GetManta/manta/wiki) when it will be ready.
+If you're looking for documentation, you can find it [here](https://github.com/getmanta/manta/wiki) when it will be ready.
 
 # Contributing
-Contribution is welcome but rules are not set, yet.
+Contribution is welcome. Checkout [contributing rules](https://github.com/GetManta/manta/blob/master/CONTRIBUTING.md).
