@@ -37,16 +37,24 @@ namespace Manta.MsSql
         {
             var p = cmd.Parameters.Add(name, type);
             if (size != null) p.Size = size.Value;
-            p.Value = value;
+            p.Value = value ?? DBNull.Value;
             return cmd;
         }
 
-        public static SqlCommand AddInputParam(this SqlCommand cmd, string name, SqlDbType type, ArraySegment<byte> value)
+        public static SqlCommand AddInputParam(this SqlCommand cmd, string name, SqlDbType type, ArraySegment<byte>? value)
         {
             var p = cmd.Parameters.Add(name, type);
-            var buffer = new byte[value.Count];
-            Array.Copy(value.Array, value.Offset, buffer, 0, value.Count);
-            p.Value = buffer;
+            if (value == null)
+            {
+                p.Value = DBNull.Value;
+            }
+            else
+            {
+                var buffer = new byte[value.Value.Count];
+                Array.Copy(value.Value.Array, value.Value.Offset, buffer, 0, value.Value.Count);
+                p.Value = buffer;
+            }
+
             return cmd;
         }
     }
