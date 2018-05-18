@@ -101,6 +101,14 @@ namespace Manta.Projections
             while (true)
             {
                 var results = await RunOnce(cancellationToken).NotOnCapturedContext();
+
+                var resultWithException = results.FirstOrDefault(x => x.HaveCaughtException());
+                if (resultWithException != null)
+                {
+                    Console.WriteLine($"Exception: {resultWithException.Exception.Message}");
+                    return stats;
+                }
+
                 stats.AddRange(results);
                 if (results.All(x => x.AnyDispatched == false)) break;
             }
