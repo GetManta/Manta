@@ -22,9 +22,10 @@ You can download source code from this repository and compile under Visual Studi
  - Idempotent writes
  - Support optimistic concurrency
  - Support any kind of message serialization
- - Support any kind of loggers through ILogger interface
+ - Support any kind of loggers through ILogger interface for Manta internal logging
  - MS SQL Server persistance implementation (with single-writer pattern for MS SQL Server implementation)
- - Support up-conversion of events to the newest versi
+ - Support up-conversion of events to the newest version
+ - Subscriptions to one or many event stream sources for processmanagers/projections/others
 
 last but not least, performance
 
@@ -39,11 +40,9 @@ last but not least, performance
  - Manta.MySql - [MySql](https://www.mysql.com/) implementation
  - Manta.SqLite - [SqLite](https://www.sqlite.org/) implementation
 
-### Other
- - Manta.Subscriptions
-   - Subscriptions to one or many event stream sources for processmanagers/projections/others
+### Others
  - Manta.Domain (as different repository)
-   - Manta.Domain - Conflict resolver
+   - Manta.Domain - Conflict resolver, repository pattern, unit of work, e.t.c.
 
 
 # Getting started
