@@ -1,13 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 
 namespace Manta.Sceleton
 {
     public interface ISerializer
     {
-        object DeserializeMessage(string messageContractName, byte[] messagePayload);
-        Dictionary<string, object> DeserializeMetadata(byte[] messageMetadataPayload);
-        ArraySegment<byte> SerializeMessage(object message);
-        ArraySegment<byte> SerializeMetadata(Dictionary<string, object> metadata);
+        object Deserialize(string contractName, TextReader reader);
+        T Deserialize<T>(TextReader reader);
+
+        ArraySegment<byte> Serialize(object message);
+        void Serialize(object message, TextWriter writer);
     }
 }

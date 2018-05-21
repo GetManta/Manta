@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[Streams](
     [InternalId] [bigint] IDENTITY(1,1) NOT NULL,
-    [Name] [varchar](512) COLLATE Latin1_General_BIN2 NOT NULL,
+    [Name] [varchar](255) COLLATE Latin1_General_BIN2 NOT NULL,
     [MessageVersion] [int] NOT NULL,
     [MessageId] [uniqueidentifier] NOT NULL,
     [CorrelationId] [uniqueidentifier] NOT NULL,
@@ -22,11 +22,10 @@ CREATE NONCLUSTERED INDEX [IX_Streams_MessagePosition_InternalId] ON [dbo].[Stre
     [InternalId] ASC
 );
 
--- For idempotency checking per stream
-CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_MessageId_Name] ON [dbo].[Streams]
+-- For idempotency checking
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_MessageId] ON [dbo].[Streams]
 (
-    [MessageId] ASC,
-    [Name] ASC
+    [MessageId] ASC
 );
 
 CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_InternalId] ON [dbo].[Streams]
@@ -49,7 +48,7 @@ GO
 
 CREATE PROCEDURE [dbo].[mantaAppendAnyVersion]
 (
-    @StreamName VARCHAR(512),
+    @StreamName VARCHAR(255),
     @CorrelationId UNIQUEIDENTIFIER,
     @ContractName VARCHAR(128),
     @MessageId UNIQUEIDENTIFIER,
@@ -59,10 +58,6 @@ CREATE PROCEDURE [dbo].[mantaAppendAnyVersion]
 AS
 BEGIN
     SET NOCOUNT ON;
-
-    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WITH(READPAST,ROWLOCK) WHERE s.[Name]=@StreamName AND s.[MessageId]=@MessageId) BEGIN
-        RETURN; -- idempotency checking
-    END
 
     INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload],[MetadataPayload])
     SELECT TOP 1
@@ -82,7 +77,7 @@ GO
 
 CREATE PROCEDURE [dbo].[mantaAppendExpectedVersion]
 (
-    @StreamName VARCHAR(512),
+    @StreamName VARCHAR(255),
     @CorrelationId UNIQUEIDENTIFIER,
     @ContractName VARCHAR(128),
     @MessageId UNIQUEIDENTIFIER,
@@ -94,7 +89,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WITH(READPAST,ROWLOCK) WHERE s.[Name]=@StreamName AND s.[MessageId]=@MessageId) BEGIN
+    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WITH(READPAST,ROWLOCK) WHERE s.[MessageId]=@MessageId) BEGIN
         RETURN; -- idempotency checking
     END
 
@@ -121,7 +116,7 @@ GO
 
 CREATE PROCEDURE [dbo].[mantaAppendNoStream]
 (
-    @StreamName VARCHAR(512),
+    @StreamName VARCHAR(255),
     @CorrelationId UNIQUEIDENTIFIER,
     @ContractName VARCHAR(128),
     @MessageId UNIQUEIDENTIFIER,
@@ -131,11 +126,6 @@ CREATE PROCEDURE [dbo].[mantaAppendNoStream]
 AS
 BEGIN
     SET NOCOUNT ON;
-
-    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WITH(READPAST,ROWLOCK) WHERE s.[Name]=@StreamName AND s.[MessageId]=@MessageId) BEGIN
-        RETURN; -- idempotency checking
-    END
-
     INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload],[MetadataPayload])
     VALUES(@StreamName,1,@MessageId,@CorrelationId,@ContractName,@Payload,@MetadataPayload)
 END;
@@ -143,7 +133,7 @@ GO
 
 CREATE PROCEDURE [dbo].[mantaReadStreamForward]
 (
-    @StreamName VARCHAR(512),
+    @StreamName VARCHAR(255),
     @FromVersion INT
 )
 AS
@@ -167,7 +157,7 @@ GO
 
 CREATE PROCEDURE [dbo].[mantaReadMessage]
 (
-    @StreamName VARCHAR(512),
+    @StreamName VARCHAR(255),
     @MessageVersion INT
 )
 AS
@@ -224,7 +214,7 @@ GO
 
 CREATE PROCEDURE [dbo].[mantaHardDeleteStream]
 (
-    @StreamName VARCHAR(512),
+    @StreamName VARCHAR(255),
     @ExpectedVersion INT
 )
 AS
@@ -242,7 +232,7 @@ GO
 
 CREATE PROCEDURE [dbo].[mantaTruncateStreamToVersion]
 (
-    @StreamName VARCHAR(512),
+    @StreamName VARCHAR(255),
     @ExpectedVersion INT,
     @ToVersion INT
 )
@@ -261,7 +251,7 @@ GO
 
 CREATE PROCEDURE [dbo].[mantaTruncateStreamToCreationDate]
 (
-    @StreamName VARCHAR(512),
+    @StreamName VARCHAR(255),
     @ExpectedVersion INT,
     @ToCreationDate datetime2(3)
 )

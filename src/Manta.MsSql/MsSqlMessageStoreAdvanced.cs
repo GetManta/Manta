@@ -20,6 +20,8 @@ namespace Manta.MsSql
         /// <inheritdoc />
         public async Task TruncateStream(string stream, int expectedVersion, int toVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
+            Guard.StreamName(stream, nameof(stream));
+
             if (expectedVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Expected version should be greater or equal 1.");
             if (toVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Version to truncate should be greater than 1.");
             if (toVersion >= expectedVersion) throw new InvalidOperationException($"Version to truncate {toVersion} must be lower than expected version {expectedVersion}.");
@@ -38,6 +40,8 @@ namespace Manta.MsSql
         /// <inheritdoc />
         public async Task TruncateStream(string stream, int expectedVersion, DateTime toCreationDate, CancellationToken cancellationToken = default(CancellationToken))
         {
+            Guard.StreamName(stream, nameof(stream));
+
             if (expectedVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Expected version should be greater or equal 1.");
 
             _settings.Logger.Trace("Truncate stream {0} to {1}...", stream, expectedVersion, toCreationDate);
@@ -54,6 +58,8 @@ namespace Manta.MsSql
         /// <inheritdoc />
         public async Task DeleteStream(string stream, int expectedVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
+            Guard.StreamName(stream, nameof(stream));
+
             if (expectedVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Expected version should be greater or equal 1.");
 
             _settings.Logger.Trace("Deleting stream {0} with expected version {1}...", stream, expectedVersion);
@@ -70,6 +76,8 @@ namespace Manta.MsSql
         /// <inheritdoc />
         public async Task<RecordedMessage> ReadMessage(string stream, int messageVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
+            Guard.StreamName(stream, nameof(stream));
+
             if (messageVersion <= ExpectedVersion.NoStream) throw new InvalidOperationException("Message version should be greater or equal 1.");
 
             _settings.Logger.Trace("Reading message {0} from stream '{1}'...", messageVersion, stream);
@@ -78,7 +86,7 @@ namespace Manta.MsSql
             using (var cmd = connection.CreateCommandForReadMessage(stream, messageVersion))
             {
                 await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
-                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancellationToken).NotOnCapturedContext())
+                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancellationToken).NotOnCapturedContext())
                 {
                     if (!reader.HasRows)
                     {
@@ -88,7 +96,7 @@ namespace Manta.MsSql
 
                     _settings.Logger.Trace("Read message {0} for stream '{1}'.", messageVersion, stream);
                     await reader.ReadAsync(cancellationToken).NotOnCapturedContext();
-                    return await reader.GetRecordedMessage(cancellationToken).NotOnCapturedContext();
+                    return reader.GetRecordedMessage();
                 }
             }
         }
