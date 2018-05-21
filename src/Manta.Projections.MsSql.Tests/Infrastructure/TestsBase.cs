@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Manta.Projections.MsSql.Tests.Infrastructure
 {
-    [Collection("Manta collection")]
+    [Collection("Manta projections collection")]
     public abstract class TestsBase : IDisposable
     {
         private readonly DatabaseInstance _dbInstance;

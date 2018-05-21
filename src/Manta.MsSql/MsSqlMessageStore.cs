@@ -31,6 +31,8 @@ namespace Manta.MsSql
         /// <inheritdoc />
         public async Task<RecordedStream> ReadStreamForward(string stream, int fromVersion, CancellationToken token = default(CancellationToken))
         {
+            Guard.StreamName(stream, nameof(stream));
+
             _settings.Logger.Trace("Reading stream '{0}' forward from version {1}...", stream, fromVersion);
 
             using (var connection = new SqlConnection(_settings.ConnectionString))
@@ -59,7 +61,8 @@ namespace Manta.MsSql
         /// <inheritdoc />
         public async Task AppendToStream(string stream, int expectedVersion, UncommittedMessages data, CancellationToken token = default(CancellationToken))
         {
-            if (stream.IsNullOrEmpty()) throw new ArgumentNullException(nameof(stream));
+            Guard.StreamName(stream, nameof(stream));
+
             if (expectedVersion < ExpectedVersion.Any) throw new ArgumentException("Expected version must be greater or equal 1, or 'Any', or 'NoStream'.", nameof(expectedVersion));
             if (data == null) throw new ArgumentNullException(nameof(data));
 

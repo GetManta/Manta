@@ -70,7 +70,7 @@ namespace Manta.Projections
         private TransformBlock<MessageRaw, MessageEnvelope> PrepareDeserializationFlow(CancellationToken token)
         {
             return new TransformBlock<MessageRaw, MessageEnvelope>(
-                raw => DeserializeTransformation(raw),
+                raw => DeserializationFlow.Transform(Serializer, UpConverterFactory, raw),
                 new ExecutionDataflowBlockOptions
                 {
                     CancellationToken = token,
@@ -107,41 +107,6 @@ namespace Manta.Projections
             }
 
             return envelopes;
-        }
-
-        private MessageEnvelope DeserializeTransformation(MessageRaw raw)
-        {
-            var message = Serializer.DeserializeMessage(raw.MessageContractName, raw.MessagePayload);
-
-            if (UpConverterFactory != null)
-            {
-                message = UpConvert(message.GetType(), message);
-            }
-
-            var metadata = new Metadata
-            {
-                CustomMetadata = Serializer.DeserializeMetadata(raw.MessageMetadataPayload),
-                CorrelationId = raw.CorrelationId,
-                MessageContractName = raw.MessageContractName,
-                MessageId = raw.MessageId,
-                MessagePosition = raw.MessagePosition,
-                MessageVersion = raw.MessageVersion,
-                StreamId = raw.StreamId,
-                Timestamp = raw.Timestamp
-            };
-
-            return new MessageEnvelope(metadata, message);
-        }
-
-        private object UpConvert(Type messageType, object message)
-        {
-            var upConverter = UpConverterFactory.CreateInstanceFor(messageType);
-            while (upConverter != null)
-            {
-                message = ((dynamic)upConverter).Convert((dynamic)message);
-                upConverter = UpConverterFactory.CreateInstanceFor(message.GetType());
-            }
-            return message;
         }
 
         private async Task<DispatchingResult> DispatchProjectionsRange(List<ProjectionDescriptor> descriptors, CancellationToken token)

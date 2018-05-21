@@ -2,7 +2,7 @@
 
 namespace Manta.Projections
 {
-    public class MessageRaw
+    public struct MessageRaw
     {
         public string StreamId;
         public Guid CorrelationId;
