@@ -44,6 +44,7 @@ namespace Manta.Projections
         public Type ProjectionType { get; }
         public string ContractName { get; }
         public HashSet<Type> MessageTypes { get; }
+        public long CurrentPosition => Checkpoint?.Position ?? 0;
 
         internal IProjectionCheckpoint Checkpoint { get; set; }
 

@@ -2,8 +2,8 @@
 using System.Data.SqlClient;
 using System.Data.SqlLocalDb;
 using System.IO;
-using System.Reflection;
 using System.Threading.Tasks;
+using Manta.MsSql;
 using Manta.Sceleton;
 
 namespace Manta.Projections.MsSql.Tests.Infrastructure
@@ -36,13 +36,19 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
         public async Task<Projector> GetProjector(Action<ProjectorBase> cfg)
         {
             if (!_databaseCreated) await CreateDatabase(GetLocation()).NotOnCapturedContext();
-            await ClearDatabase();
             var projector = new MsSqlProjector("uniqueProjectorName", ConnectionString, new JilSerializer());
             cfg?.Invoke(projector);
             return projector;
         }
 
-        private async Task ClearDatabase()
+        public async Task<IMessageStore> GetMessageStore(bool batching = true)
+        {
+            if (!_databaseCreated) await CreateDatabase(GetLocation()).NotOnCapturedContext();
+            await ClearDatabase();
+            return new MsSqlMessageStore(new MsSqlMessageStoreSettings(ConnectionString, batching));
+        }
+
+        public async Task ClearDatabase()
         {
             using (var connection = new SqlConnection(ConnectionString))
             {
