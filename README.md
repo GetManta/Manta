@@ -30,7 +30,7 @@ You can download source code from this repository and compile under Visual Studi
 last but not least, performance
 
  - on i5 2500k with SSD benchmarked ~15,000 writes per second and ~30,000 reads per second
- - on i7 8700k with SSD benchmarked ~23,000 writes per second and ~50,000 reads per second
+ - on i7 8700k with SSD benchmarked ~25,000 writes per second and ~50,000 reads per second
 
 *SSD disk speed is an important factor*
 
