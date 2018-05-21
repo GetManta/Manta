@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -18,9 +17,19 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
 
         protected string ConnectionString { get; }
 
+        protected async Task ClearDatabase()
+        {
+            await _dbInstance.ClearDatabase();
+        }
+
         protected async Task<Projector> GetProjector(Action<ProjectorBase> cfg = null)
         {
             return await _dbInstance.GetProjector(cfg);
+        }
+
+        protected async Task<IMessageStore> GetMessageStore(bool batching = true)
+        {
+            return await _dbInstance.GetMessageStore(batching);
         }
 
         public void Dispose()
