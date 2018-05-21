@@ -78,7 +78,7 @@ namespace Manta.MsSql
             using (var cmd = connection.CreateCommandForReadMessage(stream, messageVersion))
             {
                 await connection.OpenAsync(cancellationToken).NotOnCapturedContext();
-                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancellationToken).NotOnCapturedContext())
+                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancellationToken).NotOnCapturedContext())
                 {
                     if (!reader.HasRows)
                     {
@@ -88,7 +88,7 @@ namespace Manta.MsSql
 
                     _settings.Logger.Trace("Read message {0} for stream '{1}'.", messageVersion, stream);
                     await reader.ReadAsync(cancellationToken).NotOnCapturedContext();
-                    return await reader.GetRecordedMessage(cancellationToken).NotOnCapturedContext();
+                    return reader.GetRecordedMessage();
                 }
             }
         }

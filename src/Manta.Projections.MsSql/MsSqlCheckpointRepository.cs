@@ -36,7 +36,7 @@ namespace Manta.Projections.MsSql
                 cmd.CommandText = spuFetchAllProjectionCheckpoints;
 
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
-                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
+                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, cancellationToken).NotOnCapturedContext())
                 {
                     var result = new List<IProjectionCheckpoint>(20);
                     while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
@@ -45,12 +45,12 @@ namespace Manta.Projections.MsSql
                         result.Add(
                             new CheckpointState
                             {
-                                ProjectorName = await reader.GetFieldValueAsync<string>(colIndexForProjectorName, cancellationToken).NotOnCapturedContext(),
-                                ProjectionName = await reader.GetFieldValueAsync<string>(colIndexForProjectionName, cancellationToken).NotOnCapturedContext(),
-                                Position = await reader.GetFieldValueAsync<long>(colIndexForPosition, cancellationToken).NotOnCapturedContext(),
-                                DroppedAtUtc = await reader.IsDBNullAsync(colIndexForDroppedAtUtc, cancellationToken)
+                                ProjectorName = reader.GetFieldValue<string>(colIndexForProjectorName),
+                                ProjectionName = reader.GetFieldValue<string>(colIndexForProjectionName),
+                                Position = reader.GetFieldValue<long>(colIndexForPosition),
+                                DroppedAtUtc = reader.IsDBNull(colIndexForDroppedAtUtc)
                                     ? null
-                                    : await reader.GetFieldValueAsync<DateTime?>(colIndexForDroppedAtUtc, cancellationToken).NotOnCapturedContext()
+                                    : reader.GetFieldValue<DateTime?>(colIndexForDroppedAtUtc)
                             });
                     }
 

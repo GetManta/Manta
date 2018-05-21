@@ -37,7 +37,7 @@ namespace Manta.MsSql
             using (var cmd = connection.CreateCommandForReadStreamForward(stream, fromVersion))
             {
                 await connection.OpenAsync(token).NotOnCapturedContext();
-                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.SingleResult, token).NotOnCapturedContext())
+                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, token).NotOnCapturedContext())
                 {
                     if (!reader.HasRows)
                     {
@@ -48,7 +48,7 @@ namespace Manta.MsSql
                     var messages = new List<RecordedMessage>(20); // 20? How many will be enough?
                     while (await reader.ReadAsync(token).NotOnCapturedContext())
                     {
-                        messages.Add(await reader.GetRecordedMessage(token).NotOnCapturedContext());
+                        messages.Add(reader.GetRecordedMessage());
                     }
                     _settings.Logger.Trace("Read {0} messages for '{1}' stream from version {2}.", messages.Count, stream, fromVersion);
                     return new RecordedStream(messages.ToArray());

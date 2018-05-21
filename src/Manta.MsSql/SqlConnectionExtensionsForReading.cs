@@ -2,8 +2,6 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading;
-using System.Threading.Tasks;
-using Manta.Sceleton;
 
 namespace Manta.MsSql
 {
@@ -44,13 +42,13 @@ namespace Manta.MsSql
         private const byte columnIndexForContractName = 2;
         private const byte columnIndexForPayload = 3;
 
-        public static async Task<RecordedMessage> GetRecordedMessage(this SqlDataReader reader, CancellationToken cancellationToken)
+        public static RecordedMessage GetRecordedMessage(this SqlDataReader reader)
         {
             return new RecordedMessage(
-                await reader.GetFieldValueAsync<Guid>(columnIndexForMessageId, cancellationToken).NotOnCapturedContext(),
-                await reader.GetFieldValueAsync<int>(columnIndexForMessageVersion, cancellationToken).NotOnCapturedContext(),
-                await reader.GetFieldValueAsync<string>(columnIndexForContractName, cancellationToken).NotOnCapturedContext(),
-                await reader.GetFieldValueAsync<byte[]>(columnIndexForPayload, cancellationToken).NotOnCapturedContext());
+                reader.GetFieldValue<Guid>(columnIndexForMessageId),
+                reader.GetFieldValue<int>(columnIndexForMessageVersion),
+                reader.GetFieldValue<string>(columnIndexForContractName),
+                reader.GetFieldValue<byte[]>(columnIndexForPayload));
         }
     }
 }
