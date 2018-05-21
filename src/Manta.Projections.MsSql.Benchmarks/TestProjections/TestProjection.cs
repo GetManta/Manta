@@ -11,7 +11,7 @@ namespace Manta.Projections.MsSql.Benchmarks.TestProjections
     {
         public Task On(TestContracts.MessageOne m, Metadata meta, ProjectingContext context)
         {
-            //Console.WriteLine("On: " + m.GetType().Name);
+            // Console.WriteLine("On: " + m.GetType().Name);
             return Task.CompletedTask;
         }
 

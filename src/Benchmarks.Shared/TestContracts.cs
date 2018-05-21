@@ -6,18 +6,19 @@ namespace Benchmarks.Shared
     public class TestContracts
     {
         private static readonly Random rnd = new Random();
+        private const string pl = " ąśćźżółęńĄŚĆŹŻÓŁĘŃ";
 
         [DataContract(Name = "MessageOne")]
         public class MessageOne
         {
-            public int ID { get; set; }
+            public long ID { get; set; }
             public string Name { get; set; }
         }
 
         [DataContract(Name = "MessageTwo")]
         public class MessageTwo
         {
-            public int ID { get; set; }
+            public long ID { get; set; }
             public DateTime Date { get; set; }
         }
 
@@ -27,14 +28,14 @@ namespace Benchmarks.Shared
             {
                 return new MessageOne
                 {
-                    Name = Guid.NewGuid().ToString(),
-                    ID = rnd.Next(1, int.MaxValue)
+                    Name = Guid.NewGuid() + pl,
+                    ID = DateTime.UtcNow.Ticks
                 };
             }
             return new MessageTwo
             {
                 Date = DateTime.Now,
-                ID = rnd.Next(1, int.MaxValue)
+                ID = DateTime.UtcNow.Ticks
             };
         }
 

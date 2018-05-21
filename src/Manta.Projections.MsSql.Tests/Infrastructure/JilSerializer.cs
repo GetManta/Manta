@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Jil;
 using Manta.Projections.MsSql.Tests.TestProjections;
 using Manta.Sceleton;
@@ -34,7 +32,7 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            using (var ms = new MemoryStream(256))
+            using (var ms = new MemoryStream())
             using (var writer = new StreamWriter(ms))
             {
                 Serialize(message, writer);
