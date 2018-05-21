@@ -41,6 +41,8 @@ namespace Manta.Projections.MsSql.Tests
                 await linearizer.Run().NotOnCapturedContext();
             }
 
+            var head = await store.Advanced.ReadHeadMessagePosition();
+
             var projector = await GetProjector(c => c.AddProjection<TestProjection>());
             await projector.Run();
 
@@ -50,7 +52,7 @@ namespace Manta.Projections.MsSql.Tests
         private static UncommittedMessages GetUncommitedMessages()
         {
             var serializer = new JilSerializer();
-            var payload = serializer.SerializeMessage(new TestContracts.MessageOne { ID = 1, Name = "Test data" });
+            var payload = serializer.Serialize(new TestContracts.MessageOne { ID = 1, Name = "Test data" });
             var contractName = TestContracts.GetContractNameByType(typeof(TestContracts.MessageOne));
 
             return new UncommittedMessages(

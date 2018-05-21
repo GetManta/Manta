@@ -35,20 +35,6 @@ namespace Manta.MsSql.Tests
             await Assert.ThrowsAsync<WrongExpectedVersionException>(async () => await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext());
         }
 
-        [Fact]
-        public async void Appending_the_same_messages_to_existed_stream_with_nostream_expected_version_should_be_idempotent()
-        {
-            var store = await GetMessageStore();
-            const string streamName = "test-123";
-            var data = GetUncommitedMessages();
-
-            await store.AppendToStream(streamName, ExpectedVersion.NoStream, data);
-
-            var exception = await Record.ExceptionAsync(async () => await store.AppendToStream(streamName, ExpectedVersion.NoStream, data).NotOnCapturedContext());
-
-            Assert.Null(exception);
-        }
-
         private static UncommittedMessages GetUncommitedMessages()
         {
             var payload = new ArraySegment<byte>(new byte[] { 1, 2, 3 });

@@ -6,7 +6,7 @@ namespace Manta.MsSql
 {
     internal static class SqlClientExtensions
     {
-        public const short DefaultStreamNameLength = 512;
+        public const short DefaultStreamNameLength = 255;
         public const byte DefaultContractNameLength = 128;
 
         private const short duplicateKeyViolationErrorNumber = 2627;

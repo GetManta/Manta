@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -33,11 +35,14 @@ namespace Manta.MsSql.Benchmarks
         public static List<UncommittedMessages> GenerateStreams(int streamsCounter, int maxEventsCounter, out int messagesCount)
         {
             Console.WriteLine("Preparing {0} stream(s) in memory...", streamsCounter);
+
+            var pool = ArrayPool<byte>.Shared;
+
             var streams = new List<UncommittedMessages>(streamsCounter);
             messagesCount = 0;
             for (var i = 0; i < streamsCounter; i++)
             {
-                var messages = GenerateMessages(maxEventsCounter);
+                var messages = GenerateMessages(maxEventsCounter, pool);
                 messagesCount += messages.Length;
                 streams.Add(new UncommittedMessages(SequentialGuid.NewGuid(), messages));
             }
@@ -45,7 +50,7 @@ namespace Manta.MsSql.Benchmarks
             return streams;
         }
 
-        private static MessageRecord[] GenerateMessages(int maxEventsCounter)
+        private static MessageRecord[] GenerateMessages(int maxEventsCounter, ArrayPool<byte> pool)
         {
             var msgs = new MessageRecord[rnd.Next(1, maxEventsCounter)];
             for (var i = 1; i <= msgs.Length; i++)
@@ -53,9 +58,21 @@ namespace Manta.MsSql.Benchmarks
                 var contract = TestContracts.RandomContract();
                 var contractName = TestContracts.GetContractNameByType(contract.GetType());
 
-                var payload = serializer.SerializeMessage(contract);
-
-                msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), contractName, payload);
+                var buffer = pool.Rent(256);
+                try
+                {
+                    using(var mem = new MemoryStream(buffer))
+                    using (var writer = new StreamWriter(mem))
+                    {
+                        serializer.Serialize(contract, writer);
+                        writer.Flush();
+                        msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), contractName, new ArraySegment<byte>(buffer, 0, (int)mem.Position));
+                    }
+                }
+                finally
+                {
+                    pool.Return(buffer);
+                }
             }
 
             return msgs;
@@ -81,7 +98,7 @@ namespace Manta.MsSql.Benchmarks
 
         private static async Task Execute(UncommittedMessages data)
         {
-            await store.AppendToStream(data.CorrelationId.ToString(), ExpectedVersion.Any, data).NotOnCapturedContext();
+            await store.AppendToStream(data.CorrelationId.ToString(), ExpectedVersion.NoStream, data).NotOnCapturedContext();
         }
     }
 }

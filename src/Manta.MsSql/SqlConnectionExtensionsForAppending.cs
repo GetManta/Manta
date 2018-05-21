@@ -19,6 +19,8 @@ namespace Manta.MsSql
 
         public static SqlCommand CreateCommandToAppendingWithAnyVersion(this SqlConnection cnn, string name, UncommittedMessages data, MessageRecord msg)
         {
+            Guard.StreamName(msg.ContractName, "contractName");
+
             return cnn
                 .CreateCommand(mantaAppendAnyVersionCommand)
                 .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
@@ -31,6 +33,8 @@ namespace Manta.MsSql
 
         public static SqlCommand CreateCommandToAppendingWithExpectedVersion(this SqlConnection cnn, string name, UncommittedMessages data, MessageRecord msg, int messageVersion)
         {
+            Guard.StreamName(msg.ContractName, "contractName");
+
             return cnn
                 .CreateCommand(mantaAppendExpectedVersionCommand)
                 .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
@@ -44,6 +48,8 @@ namespace Manta.MsSql
 
         public static SqlCommand CreateCommandToAppendingWithNoStream(this SqlConnection cnn, string name, UncommittedMessages data, MessageRecord msg)
         {
+            Guard.StreamName(msg.ContractName, "contractName");
+
             return cnn
                 .CreateCommand(mantaAppendNoStreamCommand)
                 .AddInputParam(paramStreamName, SqlDbType.VarChar, name, SqlClientExtensions.DefaultStreamNameLength)
