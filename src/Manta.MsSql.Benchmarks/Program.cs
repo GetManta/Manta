@@ -98,7 +98,7 @@ namespace Manta.MsSql.Benchmarks
 
         private static async Task Execute(UncommittedMessages data)
         {
-            await store.AppendToStream(data.CorrelationId.ToString(), ExpectedVersion.Any, data).NotOnCapturedContext();
+            await store.AppendToStream(data.CorrelationId.ToString(), ExpectedVersion.NoStream, data).NotOnCapturedContext();
         }
     }
 }
