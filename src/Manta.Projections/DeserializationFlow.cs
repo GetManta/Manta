@@ -36,6 +36,8 @@ namespace Manta.Projections
 
         private static object DeserializeMessage(ISerializer serializer, MessageRaw raw)
         {
+            if (raw.MessagePayload == null) return null;
+
             using (var reader = new StreamReader(new MemoryStream(raw.MessagePayload), Encoding.UTF8))
             {
                 return serializer.Deserialize(raw.MessageContractName, reader);
@@ -44,6 +46,8 @@ namespace Manta.Projections
 
         private static Dictionary<string, object> DeserializeMetadata(ISerializer serializer, MessageRaw raw)
         {
+            if (raw.MessageMetadataPayload == null) return null;
+
             using (var reader = new StreamReader(new MemoryStream(raw.MessageMetadataPayload), Encoding.UTF8))
             {
                 return serializer.Deserialize<Dictionary<string, object>>(reader);
