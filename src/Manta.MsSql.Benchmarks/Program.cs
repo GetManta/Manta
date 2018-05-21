@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -36,13 +34,11 @@ namespace Manta.MsSql.Benchmarks
         {
             Console.WriteLine("Preparing {0} stream(s) in memory...", streamsCounter);
 
-            var pool = ArrayPool<byte>.Shared;
-
             var streams = new List<UncommittedMessages>(streamsCounter);
             messagesCount = 0;
             for (var i = 0; i < streamsCounter; i++)
             {
-                var messages = GenerateMessages(maxEventsCounter, pool);
+                var messages = GenerateMessages(maxEventsCounter);
                 messagesCount += messages.Length;
                 streams.Add(new UncommittedMessages(SequentialGuid.NewGuid(), messages));
             }
@@ -50,7 +46,7 @@ namespace Manta.MsSql.Benchmarks
             return streams;
         }
 
-        private static MessageRecord[] GenerateMessages(int maxEventsCounter, ArrayPool<byte> pool)
+        private static MessageRecord[] GenerateMessages(int maxEventsCounter)
         {
             var msgs = new MessageRecord[rnd.Next(1, maxEventsCounter)];
             for (var i = 1; i <= msgs.Length; i++)
@@ -58,21 +54,7 @@ namespace Manta.MsSql.Benchmarks
                 var contract = TestContracts.RandomContract();
                 var contractName = TestContracts.GetContractNameByType(contract.GetType());
 
-                var buffer = pool.Rent(256);
-                try
-                {
-                    using(var mem = new MemoryStream(buffer))
-                    using (var writer = new StreamWriter(mem))
-                    {
-                        serializer.Serialize(contract, writer);
-                        writer.Flush();
-                        msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), contractName, new ArraySegment<byte>(buffer, 0, (int)mem.Position));
-                    }
-                }
-                finally
-                {
-                    pool.Return(buffer);
-                }
+                msgs[i - 1] = new MessageRecord(SequentialGuid.NewGuid(), contractName, serializer.Serialize(contract));
             }
 
             return msgs;

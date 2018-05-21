@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using Jil;
 using Manta.Sceleton;
 
@@ -31,8 +32,8 @@ namespace Benchmarks.Shared
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            using (var ms = new MemoryStream(256))
-            using (var writer = new StreamWriter(ms))
+            using (var ms = new MemoryStream())
+            using (var writer = new StreamWriter(ms, Encoding.UTF8))
             {
                 Serialize(message, writer);
                 writer.Flush();
@@ -42,6 +43,7 @@ namespace Benchmarks.Shared
 
         public void Serialize(object message, TextWriter writer)
         {
+            if (message == null) return;
             JSON.Serialize(message, writer, _options);
         }
     }
