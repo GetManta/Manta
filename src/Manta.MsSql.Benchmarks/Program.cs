@@ -25,8 +25,8 @@ namespace Manta.MsSql.Benchmarks
             var streams = GenerateStreams(250000, 10, out var messagesCount);
             store = new MsSqlMessageStore(new MsSqlMessageStoreSettings(connectionString));
 
-            TestMultithreaded(streams, messagesCount).Wait();
-
+            MultithreadedAppendingTest(streams, messagesCount).Wait();
+            MultithreadedReadingTest(streams.OrderBy(x => Guid.NewGuid()).ToList(), messagesCount).Wait();
             Console.ReadKey();
         }
 
@@ -60,7 +60,7 @@ namespace Manta.MsSql.Benchmarks
             return msgs;
         }
 
-        public static async Task TestMultithreaded(List<UncommittedMessages> streams, int messagesCount)
+        public static async Task MultithreadedAppendingTest(List<UncommittedMessages> streams, int messagesCount)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -68,19 +68,42 @@ namespace Manta.MsSql.Benchmarks
             const int batch = 5000;
             while (true)
             {
-                var tasks = streams.Skip(index).Take(batch).Select(Execute).ToArray();
+                var tasks = streams.Skip(index).Take(batch).Select(AppendingExecute).ToArray();
                 Console.WriteLine($"\t{index}...");
                 if (tasks.Length == 0) break;
                 await Task.WhenAll(tasks);
                 index += batch;
             }
             sw.Stop();
-            Console.WriteLine($@"Test multithreaded | Overall time {sw.ElapsedMilliseconds}ms - {Math.Round(messagesCount / sw.Elapsed.TotalSeconds, 2, MidpointRounding.AwayFromZero)} event/sec | streams {streams.Count} | avg events per stream {messagesCount / streams.Count} | events {messagesCount}");
+            Console.WriteLine($@"Multithreaded appending test | Overall time {sw.ElapsedMilliseconds}ms - {Math.Round(messagesCount / sw.Elapsed.TotalSeconds, 2, MidpointRounding.AwayFromZero)} event/sec | streams {streams.Count} | avg events per stream {messagesCount / streams.Count} | events {messagesCount}");
         }
 
-        private static async Task Execute(UncommittedMessages data)
+        private static async Task AppendingExecute(UncommittedMessages data)
         {
             await store.AppendToStream(data.CorrelationId.ToString(), ExpectedVersion.NoStream, data).NotOnCapturedContext();
+        }
+
+        public static async Task MultithreadedReadingTest(List<UncommittedMessages> streams, int messagesCount)
+        {
+            var sw = new Stopwatch();
+            sw.Start();
+            var index = 0;
+            const int batch = 5000;
+            while (true)
+            {
+                var tasks = streams.Skip(index).Take(batch).Select(ReadingExecute).ToArray();
+                Console.WriteLine($"\t{index}...");
+                if (tasks.Length == 0) break;
+                await Task.WhenAll(tasks);
+                index += batch;
+            }
+            sw.Stop();
+            Console.WriteLine($@"Multithreaded reading test | Overall time {sw.ElapsedMilliseconds}ms - {Math.Round(messagesCount / sw.Elapsed.TotalSeconds, 2, MidpointRounding.AwayFromZero)} event/sec | streams {streams.Count} | avg events per stream {messagesCount / streams.Count} | events {messagesCount}");
+        }
+
+        private static async Task ReadingExecute(UncommittedMessages data)
+        {
+            await store.ReadStreamForward(data.CorrelationId.ToString(), 0);
         }
     }
 }
