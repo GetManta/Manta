@@ -89,4 +89,4 @@ await store.AppendToStream(
 If you're looking for documentation, you can find it [here](https://github.com/getmanta/manta/wiki) when it will be ready.
 
 # Contributing
-Contribution is welcome. Checkout [contributing rules](https://github.com/GetManta/manta/blob/master/CONTRIBUTING.md).
+A contribution is welcome. Checkout [contributing rules](https://github.com/GetManta/manta/blob/master/CONTRIBUTING.md).
