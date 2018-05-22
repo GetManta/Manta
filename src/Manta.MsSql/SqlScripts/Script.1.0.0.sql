@@ -16,6 +16,11 @@
     )
 );
 
+EXEC sys.sp_addextendedproperty
+    @name = 'Version', @VALUE = N'1.0.0',
+    @level0type = 'SCHEMA', @level0name = 'dbo',
+    @level1type = 'Table', @level1name = 'Streams';
+
 CREATE NONCLUSTERED INDEX [IX_Streams_MessagePosition_InternalId] ON [dbo].[Streams]
 (
     [MessagePosition] ASC,

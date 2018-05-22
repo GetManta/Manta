@@ -33,6 +33,15 @@ namespace Manta.MsSql
             return cmd;
         }
 
+        public static SqlCommand CreateTextCommand(this SqlConnection cnn, string commandText, int? commandTimeout = null)
+        {
+            var cmd = cnn.CreateCommand();
+            cmd.CommandText = commandText;
+            cmd.CommandType = CommandType.Text;
+            if (commandTimeout != null) cmd.CommandTimeout = commandTimeout.Value;
+            return cmd;
+        }
+
         public static SqlCommand AddInputParam(this SqlCommand cmd, string name, SqlDbType type, object value, int? size = null)
         {
             var p = cmd.Parameters.Add(name, type);
