@@ -15,9 +15,16 @@ namespace Manta.Sceleton
             return task.ConfigureAwait(false);
         }
 
-        public static void SwallowException(this Task task)
+        public static void SwallowException(this Task task, ILogger logger = null)
         {
-            task.ContinueWith(_ => { });
+            task.ContinueWith(
+                x =>
+                {
+                    if (x.Exception?.InnerException != null)
+                    {
+                        logger?.Error(x.Exception.InnerException.Message);
+                    }
+                });
         }
     }
 }

@@ -37,7 +37,7 @@ namespace Manta.Projections
 
         private void OnTimerElapsed(object sender, ElapsedEventArgs e)
         {
-            Run().SwallowException();
+            Run().SwallowException(Projector.Logger);
         }
 
         public void Start()

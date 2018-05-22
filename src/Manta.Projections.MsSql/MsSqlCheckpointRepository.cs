@@ -59,22 +59,19 @@ namespace Manta.Projections.MsSql
             }
         }
 
-        public async Task Update(IEnumerable<IProjectionCheckpoint> checkpoints, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task Update(IProjectionCheckpoint checkpoint, CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var cnn = new SqlConnection(_connectionString))
             {
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
-                foreach (var checkpoint in checkpoints)
-                {
-                    var cmd = cnn.CreateCommand();
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.CommandText = spuUpdateProjectionCheckpoint;
-                    cmd.AddInputParam("@ProjectorName", SqlDbType.VarChar, checkpoint.ProjectorName, 128);
-                    cmd.AddInputParam("@ProjectionName", SqlDbType.VarChar, checkpoint.ProjectionName, 128);
-                    cmd.AddInputParam("@Position", SqlDbType.BigInt, checkpoint.Position);
-                    cmd.AddInputParam("@DroppedAtUtc", SqlDbType.DateTime2, checkpoint.DroppedAtUtc ?? (object)DBNull.Value);
-                    await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
-                }
+                var cmd = cnn.CreateCommand();
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = spuUpdateProjectionCheckpoint;
+                cmd.AddInputParam("@ProjectorName", SqlDbType.VarChar, checkpoint.ProjectorName, 128);
+                cmd.AddInputParam("@ProjectionName", SqlDbType.VarChar, checkpoint.ProjectionName, 128);
+                cmd.AddInputParam("@Position", SqlDbType.BigInt, checkpoint.Position);
+                cmd.AddInputParam("@DroppedAtUtc", SqlDbType.DateTime2, checkpoint.DroppedAtUtc ?? (object)DBNull.Value);
+                await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
             }
         }
 

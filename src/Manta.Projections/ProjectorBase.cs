@@ -106,6 +106,7 @@ namespace Manta.Projections
             while (true)
             {
                 var results = await RunOnce(cancellationToken).NotOnCapturedContext();
+                stats.AddRange(results);
 
                 var resultWithException = results.FirstOrDefault(x => x.HaveCaughtException());
                 if (resultWithException != null)
@@ -114,7 +115,6 @@ namespace Manta.Projections
                     return stats;
                 }
 
-                stats.AddRange(results);
                 if (results.All(x => x.AnyDispatched == false)) break;
             }
 
@@ -154,9 +154,9 @@ namespace Manta.Projections
         protected IProjectionFactory ProjectionFactory { get; private set; }
         protected List<ProjectionDescriptor> GetActiveDescriptors() => _projectionDescriptors.Where(x => x.Checkpoint.DroppedAtUtc == null).ToList();
 
-        protected async Task UpdateDescriptors(IEnumerable<ProjectionDescriptor> descriptors, CancellationToken cancellationToken)
+        protected async Task UpdateDescriptor(ProjectionDescriptor descriptor, CancellationToken token)
         {
-            await _checkpointRepository.Update(descriptors.Select(x => x.Checkpoint).ToList(), cancellationToken).NotOnCapturedContext();
+            await _checkpointRepository.Update(descriptor.Checkpoint, token).NotOnCapturedContext();
         }
 
         protected void ProjectingError(ProjectingException exception)

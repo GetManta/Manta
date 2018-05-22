@@ -41,12 +41,31 @@ namespace Manta.Projections.MsSql.Tests
                 await linearizer.Run().NotOnCapturedContext();
             }
 
-            var head = await store.Advanced.ReadHeadMessagePosition();
-
             var projector = await GetProjector(c => c.AddProjection<TestProjection>());
             await projector.Run();
 
             Assert.Equal(data.Messages.Length, projector.GetProjections().Max(x => x.CurrentPosition));
+        }
+
+        [Fact]
+        public async void after_running_projector_with_projection_throwing_currentposition_should_be_the_same_as_postion_at_the_beggining()
+        {
+            const int expectedPositionForThrowingProjection = 0;
+
+            var store = await GetMessageStore();
+            const string streamName = "test-321";
+            var data = GetUncommitedMessages();
+
+            await store.AppendToStream(streamName, ExpectedVersion.Any, data).NotOnCapturedContext();
+            using (var linearizer = new MsSqlLinearizer(ConnectionString, new NullLogger()))
+            {
+                await linearizer.Run().NotOnCapturedContext();
+            }
+
+            var projector = await GetProjector(c => c.AddProjection<TestProjection>().AddProjection<TestProjectionWithExceptionOnMessageOne>());
+            var results = await projector.Run();
+
+            Assert.NotNull(results.SingleOrDefault(x => x.Status == DispatchingResult.Statuses.DroppedOnException && x.Descriptor.CurrentPosition == expectedPositionForThrowingProjection));
         }
 
         private static UncommittedMessages GetUncommitedMessages()
