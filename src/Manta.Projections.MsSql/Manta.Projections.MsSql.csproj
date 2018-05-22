@@ -5,11 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="SqlScripts\Initialize.sql" />
+    <None Remove="SqlScripts\Script.1.0.0.sql" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="SqlScripts\Initialize.sql" />
+    <EmbeddedResource Include="SqlScripts\Script.1.0.0.sql" />
   </ItemGroup>
 
   <ItemGroup>

@@ -24,8 +24,8 @@ namespace Manta.Projections.MsSql
                 var cmd = cnn.CreateCommand();
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.CommandText = spuReadAllStreamsForward;
-                cmd.AddInputParam(limitParamName, DbType.Int32, limit);
-                cmd.AddInputParam(fromPositionParamName, DbType.Int64, fromPosition);
+                cmd.AddInputParam(limitParamName, SqlDbType.Int, limit);
+                cmd.AddInputParam(fromPositionParamName, SqlDbType.Int, fromPosition);
 
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                 var rows = 0;

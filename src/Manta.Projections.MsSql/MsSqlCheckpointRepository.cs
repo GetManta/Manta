@@ -69,10 +69,10 @@ namespace Manta.Projections.MsSql
                     var cmd = cnn.CreateCommand();
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.CommandText = spuUpdateProjectionCheckpoint;
-                    cmd.AddInputParam("@ProjectorName", DbType.AnsiString, checkpoint.ProjectorName, 128);
-                    cmd.AddInputParam("@ProjectionName", DbType.AnsiString, checkpoint.ProjectionName, 128);
-                    cmd.AddInputParam("@Position", DbType.Int64, checkpoint.Position);
-                    cmd.AddInputParam("@DroppedAtUtc", DbType.DateTime2, checkpoint.DroppedAtUtc ?? (object)DBNull.Value);
+                    cmd.AddInputParam("@ProjectorName", SqlDbType.VarChar, checkpoint.ProjectorName, 128);
+                    cmd.AddInputParam("@ProjectionName", SqlDbType.VarChar, checkpoint.ProjectionName, 128);
+                    cmd.AddInputParam("@Position", SqlDbType.BigInt, checkpoint.Position);
+                    cmd.AddInputParam("@DroppedAtUtc", SqlDbType.DateTime2, checkpoint.DroppedAtUtc ?? (object)DBNull.Value);
                     await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
                 }
             }
@@ -88,8 +88,8 @@ namespace Manta.Projections.MsSql
                     var cmd = cnn.CreateCommand();
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.CommandText = spuDeleteProjectionCheckpoint;
-                    cmd.AddInputParam("@ProjectorName", DbType.AnsiString, checkpoint.ProjectorName, 128);
-                    cmd.AddInputParam("@ProjectionName", DbType.AnsiString, checkpoint.ProjectionName, 128);
+                    cmd.AddInputParam("@ProjectorName", SqlDbType.VarChar, checkpoint.ProjectorName, 128);
+                    cmd.AddInputParam("@ProjectionName", SqlDbType.VarChar, checkpoint.ProjectionName, 128);
                     await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
                 }
             }
@@ -109,8 +109,8 @@ namespace Manta.Projections.MsSql
                     ProjectionName = projectionName
                 };
 
-                cmd.AddInputParam("@ProjectorName", DbType.AnsiString, checkpoint.ProjectorName, 128);
-                cmd.AddInputParam("@ProjectionName", DbType.AnsiString, checkpoint.ProjectionName, 128);
+                cmd.AddInputParam("@ProjectorName", SqlDbType.VarChar, checkpoint.ProjectorName, 128);
+                cmd.AddInputParam("@ProjectionName", SqlDbType.VarChar, checkpoint.ProjectionName, 128);
 
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                 await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();

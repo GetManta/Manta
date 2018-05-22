@@ -2,7 +2,7 @@
 using System.Data;
 using System.Data.SqlClient;
 
-namespace Manta.MsSql.Installer
+namespace Manta.Projections.MsSql.Installer
 {
     internal static class InstallerExtensions
     {
@@ -12,7 +12,7 @@ namespace Manta.MsSql.Installer
 EXEC sys.sp_updateextendedproperty 
     @name = 'Version', @VALUE = @Version,
     @level0type = 'SCHEMA', @level0name = 'dbo', 
-    @level1type = 'Table', @level1name = 'Streams';";
+    @level1type = 'Table', @level1name = 'StreamsProjectionCheckpoints';";
 
         private const string mantaGetVersion = @"
 SELECT 
@@ -21,7 +21,7 @@ FROM
     sys.extended_properties AS p
     INNER JOIN sys.TABLES tbl ON tbl.object_id = p.major_id
 WHERE
-    p.name <> 'MS_Description' AND p.class = 1 AND tbl.name = 'Streams';";
+    p.name <> 'MS_Description' AND p.class = 1 AND tbl.name = 'StreamsProjectionCheckpoints';";
 
         public static SqlCommand CreateCommandForGetVersion(this SqlConnection cnn)
         {

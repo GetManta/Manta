@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Benchmarks.Shared;
 using Manta.Projections.MsSql.Benchmarks.TestProjections;
+using Manta.Projections.MsSql.Installer;
 using Manta.Sceleton.Logging;
 
 namespace Manta.Projections.MsSql.Benchmarks
@@ -13,6 +14,9 @@ namespace Manta.Projections.MsSql.Benchmarks
         private static void Main(string[] args)
         {
             Console.WriteLine("Starting...");
+
+            Install().Wait();
+
             var projector = new MsSqlProjector("StaticUniqueProjectorName", connectionString, new JilSerializer())
                 .AddProjections(typeof(TestProjection).Assembly, t => t.Namespace.StartsWith("Manta.Projections.MsSql.Benchmarks.TestProjections"))
                 .AddLogger(new NullLogger())
@@ -28,6 +32,12 @@ namespace Manta.Projections.MsSql.Benchmarks
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
+        }
+
+        private static async Task Install()
+        {
+            var installer = new MsSqlProjectorsInstaller(connectionString);
+            await installer.Execute();
         }
 
         private static async Task ExecuteOnce(ProjectorBase projector)

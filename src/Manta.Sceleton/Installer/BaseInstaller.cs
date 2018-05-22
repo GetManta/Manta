@@ -14,8 +14,7 @@ namespace Manta.Sceleton.Installer
 
         protected BaseInstaller(Assembly moduleAssembly)
         {
-            if (_assembly == null) throw new ArgumentNullException(nameof(moduleAssembly));
-            _assembly = moduleAssembly;
+            _assembly = moduleAssembly ?? throw new ArgumentNullException(nameof(moduleAssembly));
         }
 
         public async Task Execute(CancellationToken token = default(CancellationToken))
