@@ -9,6 +9,12 @@
         [ProjectionName] ASC
     )
 );
+
+EXEC sys.sp_addextendedproperty
+    @name = 'Version', @VALUE = N'1.0.0',
+    @level0type = 'SCHEMA', @level0name = 'dbo',
+    @level1type = 'Table', @level1name = 'StreamsProjectionCheckpoints';
+
 GO
 
 CREATE PROCEDURE [dbo].[mantaFetchAllProjectionCheckpoints]
