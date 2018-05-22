@@ -38,7 +38,7 @@ namespace Manta.Projections
         public int BatchSize { get; }
         internal ILogger Logger { get; private set; }
 
-        public IEnumerable<ProjectionDescriptor> GetProjections()
+        public IEnumerable<IProjectionDescriptor> GetProjections()
         {
             return _projectionDescriptors;
         }
