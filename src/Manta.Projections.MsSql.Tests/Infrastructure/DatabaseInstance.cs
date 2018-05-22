@@ -4,6 +4,7 @@ using System.Data.SqlLocalDb;
 using System.IO;
 using System.Threading.Tasks;
 using Manta.MsSql;
+using Manta.MsSql.Installer;
 using Manta.Sceleton;
 
 namespace Manta.Projections.MsSql.Tests.Infrastructure
@@ -83,6 +84,9 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
                 }
             }
 
+            var installer = new MsSqlMessageStoreInstaller(ConnectionString);
+            await installer.Execute();
+
             using (var connection = new SqlConnection(ConnectionString))
             {
                 await connection.OpenAsync().NotOnCapturedContext();
@@ -97,18 +101,8 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
                         await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
                     }
                 }
-
-                scripts = Manta.MsSql.SqlScripts.Initialize.InitializeQuery.Split(new[] { "GO" }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var script in scripts)
-                {
-                    using (var cmd = connection.CreateCommand())
-                    {
-                        cmd.CommandText = script.Trim();
-                        if (string.IsNullOrEmpty(cmd.CommandText)) continue;
-                        await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
-                    }
-                }
             }
+
             _databaseCreated = true;
         }
 

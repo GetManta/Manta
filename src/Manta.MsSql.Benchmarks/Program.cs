@@ -22,11 +22,11 @@ namespace Manta.MsSql.Benchmarks
             Console.WriteLine("Manta Benchmarks ({0}) {1} batching...", RuntimeInformation.FrameworkDescription, SqlClientSqlCommandSet.IsSqlCommandSetAvailable ? "With" : "Without");
             Console.WriteLine("{0} ({1})", RuntimeInformation.OSDescription, RuntimeInformation.OSArchitecture);
 
+            Install().Wait();
+
             serializer = new JilSerializer();
             var streams = GenerateStreams(250000, 10, out var messagesCount);
             store = new MsSqlMessageStore(new MsSqlMessageStoreSettings(connectionString));
-
-            Install().Wait();
 
             MultithreadedAppendingTest(streams, messagesCount).Wait();
             MultithreadedReadingTest(streams.OrderBy(x => Guid.NewGuid()).ToList(), messagesCount).Wait();
@@ -36,7 +36,7 @@ namespace Manta.MsSql.Benchmarks
         private static async Task Install()
         {
             var installer = new MsSqlMessageStoreInstaller(connectionString);
-            await installer.Setup();
+            await installer.Execute();
         }
 
         public static List<UncommittedMessages> GenerateStreams(int streamsCounter, int maxEventsCounter, out int messagesCount)
