@@ -19,45 +19,45 @@ namespace Manta.Projections
             var projectionDescriptors = GetActiveDescriptors();
             if (projectionDescriptors.Count == 0) return new List<DispatchingResult>(0);
 
-            var projectionsFlow = PrepareProjectionsFlow(token);
-            var flow = ProduceProjectionsFlow(projectionsFlow, projectionDescriptors, token);
+            var projectionsFlow = PrepareProjectionsRangeFlow(token);
+            var producer = ProduceProjectionsFlow(projectionsFlow, projectionDescriptors, token);
             var consumer = ConsumeProjectionsFlow(projectionsFlow, token).NotOnCapturedContext();
 
-            await Task.WhenAll(flow, projectionsFlow.Completion);
+            await Task.WhenAll(producer, projectionsFlow.Completion);
 
             return await consumer;
         }
 
-        private async Task ProduceProjectionsFlow(TransformBlock<List<ProjectionDescriptor>, DispatchingResult> projectionsFlow, List<ProjectionDescriptor> projectionDescriptors, CancellationToken token)
+        private async Task ProduceProjectionsFlow(TransformBlock<List<ProjectionDescriptor>, List<DispatchingResult>> flow, List<ProjectionDescriptor> descriptors, CancellationToken token)
         {
             var positionRanges = this.GenerateRanges(
-                projectionDescriptors.Min(x => x.Checkpoint.Position),
-                projectionDescriptors.Max(x => x.Checkpoint.Position),
+                descriptors.Min(x => x.Checkpoint.Position),
+                descriptors.Max(x => x.Checkpoint.Position),
                 BatchSize);
 
-            foreach (var projectionGroup in projectionDescriptors.GroupBy(x => positionRanges.FirstOrDefault(r => r >= x.Checkpoint.Position)))
+            foreach (var projectionGroup in descriptors.GroupBy(x => positionRanges.FirstOrDefault(r => r >= x.Checkpoint.Position)))
             {
                 Logger.Debug("Calculated min position {0}.", projectionGroup.Key);
-                await projectionsFlow.SendAsync(projectionGroup.ToList(), token).NotOnCapturedContext();
+                await flow.SendAsync(projectionGroup.ToList(), token).NotOnCapturedContext();
             }
-            projectionsFlow.Complete();
+            flow.Complete();
         }
 
-        private static async Task<List<DispatchingResult>> ConsumeProjectionsFlow(TransformBlock<List<ProjectionDescriptor>, DispatchingResult> projectionsFlow, CancellationToken token)
+        private async Task<List<DispatchingResult>> ConsumeProjectionsFlow(TransformBlock<List<ProjectionDescriptor>, List<DispatchingResult>> flow, CancellationToken token)
         {
-            var results = new List<DispatchingResult>(2);
-            while(await projectionsFlow.OutputAvailableAsync(token).NotOnCapturedContext())
+            var results = new List<DispatchingResult>(GetActiveDescriptors().Count);
+            while(await flow.OutputAvailableAsync(token).NotOnCapturedContext())
             {
-                var r = await projectionsFlow.ReceiveAsync(token).NotOnCapturedContext();
-                results.Add(r);
+                var r = await flow.ReceiveAsync(token).NotOnCapturedContext();
+                results.AddRange(r);
             }
 
             return results;
         }
 
-        private TransformBlock<List<ProjectionDescriptor>, DispatchingResult> PrepareProjectionsFlow(CancellationToken token)
+        private TransformBlock<List<ProjectionDescriptor>, List<DispatchingResult>> PrepareProjectionsRangeFlow(CancellationToken token)
         {
-            return new TransformBlock<List<ProjectionDescriptor>, DispatchingResult>(
+            return new TransformBlock<List<ProjectionDescriptor>, List<DispatchingResult>>(
                 async descriptors => await DispatchProjectionsRange(descriptors, token),
                 new ExecutionDataflowBlockOptions
                 {
@@ -76,6 +76,18 @@ namespace Manta.Projections
                     CancellationToken = token,
                     MaxDegreeOfParallelism = Environment.ProcessorCount,
                     BoundedCapacity = 250
+                });
+        }
+
+        private TransformBlock<DispatchingContext, DispatchingResult> PrepareProjectionDispathersFlow(CancellationToken token)
+        {
+            return new TransformBlock<DispatchingContext, DispatchingResult>(
+                ctx => Dispatch(ctx.Descriptor, ctx.Envelopes, token),
+                new ExecutionDataflowBlockOptions
+                {
+                    CancellationToken = token,
+                    MaxDegreeOfParallelism = Environment.ProcessorCount,
+                    BoundedCapacity = Environment.ProcessorCount
                 });
         }
 
@@ -109,69 +121,83 @@ namespace Manta.Projections
             return envelopes;
         }
 
-        private async Task<DispatchingResult> DispatchProjectionsRange(List<ProjectionDescriptor> descriptors, CancellationToken token)
+        private async Task<List<DispatchingResult>> DispatchProjectionsRange(List<ProjectionDescriptor> descriptors, CancellationToken token)
         {
-            try
-            {
-                var envelopes = await DeserializeEnvelopes(descriptors, token).NotOnCapturedContext();
-                var anyDispatched = false;
-                
-                var sw = new Stopwatch();
-                sw.Start();
+            var envelopes = await DeserializeEnvelopes(descriptors, token).NotOnCapturedContext();
 
-                using (var scope = this.NewTransactionScope())
-                {
-                    try
-                    {
-                        var context = new ProjectingContext(MaxProjectingRetries);
-                        foreach (var envelope in envelopes)
-                        {
-                            if (envelope.Message == null) continue;
-                            var dispatched = await Dispatch(descriptors, envelope, context).NotOnCapturedContext();
-                            anyDispatched |= dispatched;
-                        }
+            var flow = PrepareProjectionDispathersFlow(token);
+            var producer = ProduceProjectionDispatchersFlow(flow, descriptors, envelopes, token);
+            var consumer = ConsumeProjectionDispatchersFlow(flow, token).NotOnCapturedContext();
 
-                        await UpdateDescriptors(descriptors, token).NotOnCapturedContext();
-                        scope.Complete();
-                    }
-                    catch (Exception e) // unhandled exception in batch
-                    {
-                        sw.Stop();
-                        return new DispatchingResult(e, envelopes.Count, sw.ElapsedMilliseconds, anyDispatched);
-                    }
-                }
+            await Task.WhenAll(producer, flow.Completion);
 
-                sw.Stop();
-                return new DispatchingResult(envelopes.Count, sw.ElapsedMilliseconds, anyDispatched);
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e.ToString());
-                return new DispatchingResult(e, 0, 0, false);
-            }
+            return await consumer;
         }
 
-        private async Task<bool> Dispatch(IEnumerable<ProjectionDescriptor> projections, MessageEnvelope envelope, ProjectingContext context)
+        private async Task<List<DispatchingResult>> ConsumeProjectionDispatchersFlow(TransformBlock<DispatchingContext, DispatchingResult> flow, CancellationToken token)
         {
-            var messageType = envelope.Message.GetType();
+            var capacity = flow.InputCount + flow.OutputCount;
+            if (capacity == 0) capacity = BatchSize / 4;
 
-            var anyDispatched = false;
-            foreach (var projection in projections)
+            var results = new List<DispatchingResult>(capacity);
+            while (await flow.OutputAvailableAsync(token).NotOnCapturedContext())
             {
-                if (projection.Checkpoint.DroppedAtUtc != null) continue;
-                if (projection.Checkpoint.Position >= envelope.Meta.MessagePosition) continue;
-                if (!projection.IsProjecting(messageType)) continue;
-
-                context.Reset();
-                var dispatched = await DispatchProjection(projection, envelope, context).NotOnCapturedContext();
-                if (dispatched)
-                {
-                    projection.Checkpoint.Position = envelope.Meta.MessagePosition;
-                    anyDispatched = true;
-                }
+                var e = await flow.ReceiveAsync(token).NotOnCapturedContext();
+                results.Add(e);
             }
 
-            return anyDispatched;
+            return results;
+        }
+
+        private static async Task ProduceProjectionDispatchersFlow(TransformBlock<DispatchingContext, DispatchingResult> flow, List<ProjectionDescriptor> descriptors, List<MessageEnvelope> envelopes, CancellationToken token)
+        {
+            foreach (var desc in descriptors)
+            {
+                await flow.SendAsync(new DispatchingContext(desc, envelopes), token).NotOnCapturedContext();
+            }
+            flow.Complete();
+        }
+
+
+        private async Task<DispatchingResult> Dispatch(ProjectionDescriptor descriptor, List<MessageEnvelope> envelopes, CancellationToken token)
+        {
+            if (descriptor.Checkpoint.DroppedAtUtc != null) return DispatchingResult.StillDropped(descriptor);
+
+            var sw = new Stopwatch();
+            var context = new ProjectingContext(MaxProjectingRetries, descriptor.Checkpoint.Position);
+            var anyDispatched = false;
+            try
+            {
+                sw.Start();
+                using (var scope = this.NewTransactionScope())
+                {
+                    foreach (var envelope in envelopes)
+                    {
+                        if (descriptor.Checkpoint.Position >= envelope.Meta.MessagePosition) continue;
+                        if (!descriptor.IsProjecting(envelope.Message.GetType())) continue;
+
+                        context.Reset();
+                        var dispatched = await DispatchProjection(descriptor, envelope, context).NotOnCapturedContext();
+                        if (dispatched)
+                        {
+                            descriptor.Checkpoint.Position = envelope.Meta.MessagePosition;
+                            anyDispatched = true;
+                        }
+                    }
+
+                    await UpdateDescriptor(descriptor, token).NotOnCapturedContext();
+                    scope.Complete();
+                }
+                sw.Stop();
+                return DispatchingResult.Dispatched(descriptor, envelopes.Count, sw.ElapsedMilliseconds, anyDispatched);
+            }
+            catch (Exception e) // error in batch
+            {
+                sw.Stop();
+                descriptor.Checkpoint.Position = context.StartingBatchAtPosition;
+                await UpdateDescriptor(descriptor, token).NotOnCapturedContext();
+                return DispatchingResult.DroppedOnException(descriptor, envelopes.Count, sw.ElapsedMilliseconds, e);
+            }
         }
 
         private async Task<bool> DispatchProjection(ProjectionDescriptor projection, MessageEnvelope envelope, ProjectingContext context)
@@ -198,7 +224,7 @@ namespace Manta.Projections
                     if (!context.CanRetry())
                     {
                         projection.Drop();
-                        return false;
+                        throw;
                     }
                     context.NextRetry();
                 }
@@ -219,11 +245,4 @@ namespace Manta.Projections
             }
         }
     }
-
-    /*
-     * Group by message position range
-     * - Fetch
-     * - Deserialize
-     * - Dispatch batch
-     */
 }
