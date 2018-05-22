@@ -30,7 +30,7 @@ namespace Manta.Projections.MsSql.Benchmarks
 
             ExecuteRunner(projector);
 
-            Console.WriteLine("Press any key to exit...");
+            Console.WriteLine("\r\nPress any key to exit...");
             Console.ReadKey();
         }
 
@@ -54,7 +54,7 @@ namespace Manta.Projections.MsSql.Benchmarks
 
                 runner.Start();
 
-                Console.WriteLine("Press any key to stop runner...");
+                Console.WriteLine("\r\nPress any key to stop runner...");
                 Console.ReadKey();
 
                 runner.Stop();
