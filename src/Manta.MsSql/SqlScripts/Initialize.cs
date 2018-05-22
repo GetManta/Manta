@@ -5,9 +5,9 @@
         static Initialize()
         {
             // Load embeded query
-            Query = Resources.Read("Manta.MsSql.SqlScripts.Initialize.sql");
+            InitializeQuery = Resources.Read("Manta.MsSql.SqlScripts.Initialize.sql");
         }
 
-        public static string Query { get; }
+        public static string InitializeQuery { get; }
     }
 }

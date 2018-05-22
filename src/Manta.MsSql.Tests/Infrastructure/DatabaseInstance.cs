@@ -78,7 +78,7 @@ namespace Manta.MsSql.Tests.Infrastructure
             {
                 await connection.OpenAsync().NotOnCapturedContext();
 
-                var scripts = SqlScripts.Initialize.Query.Split(new[] { "GO" }, StringSplitOptions.RemoveEmptyEntries);
+                var scripts = SqlScripts.Initialize.InitializeQuery.Split(new[] { "GO" }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var script in scripts)
                 {
                     using (var cmd = connection.CreateCommand())

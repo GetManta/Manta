@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Benchmarks.Shared;
+using Manta.MsSql.Installer;
 using Manta.Sceleton;
 
 namespace Manta.MsSql.Benchmarks
@@ -25,9 +26,17 @@ namespace Manta.MsSql.Benchmarks
             var streams = GenerateStreams(250000, 10, out var messagesCount);
             store = new MsSqlMessageStore(new MsSqlMessageStoreSettings(connectionString));
 
+            Install().Wait();
+
             MultithreadedAppendingTest(streams, messagesCount).Wait();
             MultithreadedReadingTest(streams.OrderBy(x => Guid.NewGuid()).ToList(), messagesCount).Wait();
             Console.ReadKey();
+        }
+
+        private static async Task Install()
+        {
+            var installer = new MsSqlMessageStoreInstaller(connectionString);
+            await installer.Setup();
         }
 
         public static List<UncommittedMessages> GenerateStreams(int streamsCounter, int maxEventsCounter, out int messagesCount)

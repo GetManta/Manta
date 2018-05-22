@@ -98,7 +98,7 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
                     }
                 }
 
-                scripts = Manta.MsSql.SqlScripts.Initialize.Query.Split(new[] { "GO" }, StringSplitOptions.RemoveEmptyEntries);
+                scripts = Manta.MsSql.SqlScripts.Initialize.InitializeQuery.Split(new[] { "GO" }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var script in scripts)
                 {
                     using (var cmd = connection.CreateCommand())
