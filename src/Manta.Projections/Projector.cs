@@ -236,7 +236,7 @@ namespace Manta.Projections
             {
                 var instance = ProjectionFactory.CreateProjectionInstance(projection.ProjectionType);
                 if (instance == null) throw new NullReferenceException($"Projection instance {projection.ProjectionType.FullName} is null.");
-                await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context).NotOnCapturedContext();
+                await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context);
             }
             catch (Exception e)
             {

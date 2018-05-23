@@ -15,7 +15,7 @@ namespace Manta.Projections.MsSql.Tests
         public MsSqlProjectorTests(LocalDbFixture fixture) : base(fixture) { }
 
         [Fact]
-        public async void running_projector_not_throws()
+        public async void running_projector_without_adding_projections_not_throws()
         {
             var projector = await GetProjector(c => c.AddProjections(typeof(TestContracts).Assembly));
 
