@@ -45,12 +45,12 @@ namespace Manta.Projections.MsSql
                         result.Add(
                             new CheckpointState
                             {
-                                ProjectorName = reader.GetFieldValue<string>(colIndexForProjectorName),
-                                ProjectionName = reader.GetFieldValue<string>(colIndexForProjectionName),
-                                Position = reader.GetFieldValue<long>(colIndexForPosition),
+                                ProjectorName = reader.GetString(colIndexForProjectorName),
+                                ProjectionName = reader.GetString(colIndexForProjectionName),
+                                Position = reader.GetInt64(colIndexForPosition),
                                 DroppedAtUtc = reader.IsDBNull(colIndexForDroppedAtUtc)
                                     ? null
-                                    : reader.GetFieldValue<DateTime?>(colIndexForDroppedAtUtc)
+                                    : (DateTime?)reader.GetDateTime(colIndexForDroppedAtUtc)
                             });
                     }
 

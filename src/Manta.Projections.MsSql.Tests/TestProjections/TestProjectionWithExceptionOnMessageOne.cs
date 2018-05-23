@@ -9,12 +9,12 @@ namespace Manta.Projections.MsSql.Tests.TestProjections
         IProjecting<TestContracts.MessageOne>,
         IProjecting<TestContracts.MessageTwo>
     {
-        public Task On(TestContracts.MessageOne m, Metadata meta, ProjectingContext context)
+        public Task On(TestContracts.MessageOne m, IMetadata meta, ProjectingContext context)
         {
             throw new Exception("Should drop!");
         }
 
-        public Task On(TestContracts.MessageTwo m, Metadata meta, ProjectingContext context)
+        public Task On(TestContracts.MessageTwo m, IMetadata meta, ProjectingContext context)
         {
             return Task.CompletedTask;
         }

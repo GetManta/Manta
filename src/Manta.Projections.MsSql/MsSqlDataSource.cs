@@ -1,5 +1,4 @@
-﻿using System;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,17 +34,17 @@ namespace Manta.Projections.MsSql
                     {
                         var raw = new MessageRaw
                         {
-                            StreamId = reader.GetFieldValue<string>(colIndexForStreamName),
-                            MessageContractName = reader.GetFieldValue<string>(colIndexForContractName),
-                            CorrelationId = reader.GetFieldValue<Guid>(colIndexForCorrelationId),
-                            Timestamp = reader.GetFieldValue<DateTime>(colIndexForTimestamp),
-                            MessageId = reader.GetFieldValue<Guid>(colIndexForMessageId),
-                            MessageVersion = reader.GetFieldValue<int>(colIndexForMessageVersion),
-                            MessagePosition = reader.GetFieldValue<long>(colIndexForMessagePosition),
-                            MessagePayload = reader.GetFieldValue<byte[]>(colIndexForMessagePayload),
+                            StreamId = reader.GetString(colIndexForStreamName),
+                            MessageContractName = reader.GetString(colIndexForContractName),
+                            CorrelationId = reader.GetGuid(colIndexForCorrelationId),
+                            Timestamp = reader.GetDateTime(colIndexForTimestamp),
+                            MessageId = reader.GetGuid(colIndexForMessageId),
+                            MessageVersion = reader.GetInt32(colIndexForMessageVersion),
+                            MessagePosition = reader.GetInt64(colIndexForMessagePosition),
+                            MessagePayload = reader.GetStream(colIndexForMessagePayload),
                             MessageMetadataPayload = reader.IsDBNull(colIndexForMessageMetadataPayload)
                                 ? null
-                                : reader.GetFieldValue<byte[]>(colIndexForMessageMetadataPayload)
+                                : reader.GetStream(colIndexForMessageMetadataPayload)
                         };
 
                         await buffer.SendAsync(raw, cancellationToken).NotOnCapturedContext();

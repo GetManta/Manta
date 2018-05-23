@@ -1,10 +1,11 @@
 ﻿using System;
+using System.IO;
 
 namespace Manta
 {
     public class RecordedMessage
     {
-        public RecordedMessage(Guid messageId, int version, string contractName, byte[] payload)
+        public RecordedMessage(Guid messageId, int version, string contractName, Stream payload)
         {
             MessageId = messageId;
             Version = version;
@@ -15,6 +16,6 @@ namespace Manta
         public Guid MessageId { get; }
         public string ContractName { get; }
         public int Version { get; }
-        public byte[] Payload { get; }
+        public Stream Payload { get; }
     }
 }
