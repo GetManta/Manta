@@ -6,5 +6,3 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyCopyright("Copyright 2017 Dariusz Lenartowicz. All rights reserved.")]
 
 [assembly: InternalsVisibleTo("Manta.Projections.MsSql.Tests")]
-[assembly: InternalsVisibleTo("Manta.Projections.MsSql.Benchmarks")]
-[assembly: InternalsVisibleTo("Manta.Projections.MsSql.Benchmarks.NetCore")]

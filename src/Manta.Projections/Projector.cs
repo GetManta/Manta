@@ -21,7 +21,7 @@ namespace Manta.Projections
 
             var projectionsFlow = PrepareProjectionsRangeFlow(token);
             var producer = ProduceProjectionsFlow(projectionsFlow, projectionDescriptors, token);
-            var consumer = ConsumeProjectionsFlow(projectionsFlow, token).NotOnCapturedContext();
+            var consumer = ConsumeProjectionsFlow(projectionsFlow, projectionDescriptors.Count, token).NotOnCapturedContext();
 
             await Task.WhenAll(producer, projectionsFlow.Completion);
 
@@ -43,9 +43,9 @@ namespace Manta.Projections
             flow.Complete();
         }
 
-        private async Task<List<DispatchingResult>> ConsumeProjectionsFlow(TransformBlock<List<ProjectionDescriptor>, List<DispatchingResult>> flow, CancellationToken token)
+        private static async Task<List<DispatchingResult>> ConsumeProjectionsFlow(TransformBlock<List<ProjectionDescriptor>, List<DispatchingResult>> flow, int activeDescriptors, CancellationToken token)
         {
-            var results = new List<DispatchingResult>(GetActiveDescriptors().Count);
+            var results = new List<DispatchingResult>(activeDescriptors);
             while(await flow.OutputAvailableAsync(token).NotOnCapturedContext())
             {
                 var r = await flow.ReceiveAsync(token).NotOnCapturedContext();
@@ -151,9 +151,9 @@ namespace Manta.Projections
 
         private static async Task ProduceProjectionDispatchersFlow(TransformBlock<DispatchingContext, DispatchingResult> flow, List<ProjectionDescriptor> descriptors, List<MessageEnvelope> envelopes, CancellationToken token)
         {
-            foreach (var desc in descriptors)
+            foreach (var descriptor in descriptors)
             {
-                await flow.SendAsync(new DispatchingContext(desc, envelopes), token).NotOnCapturedContext();
+                await flow.SendAsync(new DispatchingContext(descriptor, envelopes), token).NotOnCapturedContext();
             }
             flow.Complete();
         }
@@ -161,7 +161,7 @@ namespace Manta.Projections
 
         private async Task<DispatchingResult> Dispatch(ProjectionDescriptor descriptor, List<MessageEnvelope> envelopes, CancellationToken token)
         {
-            if (descriptor.Checkpoint.DroppedAtUtc != null) return DispatchingResult.StillDropped(descriptor);
+            if (descriptor.IsDropped()) return DispatchingResult.StillDropped(descriptor);
 
             var sw = new Stopwatch();
             var context = new ProjectingContext(MaxProjectingRetries, descriptor.Checkpoint.Position);
@@ -177,15 +177,14 @@ namespace Manta.Projections
                         if (!descriptor.IsProjecting(envelope.Message.GetType())) continue;
 
                         context.Reset();
-                        var dispatched = await DispatchProjection(descriptor, envelope, context).NotOnCapturedContext();
-                        if (dispatched)
+                        if (await DispatchProjection(descriptor, envelope, context).NotOnCapturedContext())
                         {
                             descriptor.Checkpoint.Position = envelope.Meta.MessagePosition;
                             anyDispatched = true;
                         }
                     }
 
-                    await UpdateDescriptor(descriptor, token).NotOnCapturedContext();
+                    await UpdateCheckpoint(descriptor.Checkpoint, token).NotOnCapturedContext();
                     scope.Complete();
                 }
                 sw.Stop();
@@ -194,8 +193,8 @@ namespace Manta.Projections
             catch (Exception e) // error in batch
             {
                 sw.Stop();
-                descriptor.Checkpoint.Position = context.StartingBatchAtPosition;
-                await UpdateDescriptor(descriptor, token).NotOnCapturedContext();
+                descriptor.Checkpoint.Position = context.StartingBatchAtPosition; // restoring position
+                await UpdateCheckpoint(descriptor.Checkpoint, token).NotOnCapturedContext();
                 return DispatchingResult.DroppedOnException(descriptor, envelopes.Count, sw.ElapsedMilliseconds, e);
             }
         }
@@ -237,9 +236,9 @@ namespace Manta.Projections
             {
                 var instance = ProjectionFactory.CreateProjectionInstance(projection.ProjectionType);
                 if (instance == null) throw new NullReferenceException($"Projection instance {projection.ProjectionType.FullName} is null.");
-                await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context);
+                await ((dynamic)instance).On((dynamic)envelope.Message, envelope.Meta, context).NotOnCapturedContext();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new ProjectingException(projection, envelope, context, e);
             }

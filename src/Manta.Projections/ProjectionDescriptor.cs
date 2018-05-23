@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 
 namespace Manta.Projections
 {
-    public class ProjectionDescriptor : IProjectionDescriptor
+    public class ProjectionDescriptor
     {
         private static readonly Type handlerType = typeof(IProjecting<>);
 
@@ -15,6 +15,16 @@ namespace Manta.Projections
             ProjectionType = projectionType;
             ContractName = GetContractName(ProjectionType);
             MessageTypes = FindMessageTypes(ProjectionType);
+        }
+
+        public Type ProjectionType { get; }
+        public string ContractName { get; }
+        public HashSet<Type> MessageTypes { get; }
+        public long CurrentPosition => Checkpoint?.Position ?? 0;
+        public DateTime? DroppedAtUtc => Checkpoint?.DroppedAtUtc;
+        public bool IsDropped()
+        {
+            return DroppedAtUtc != null;
         }
 
         private static HashSet<Type> FindMessageTypes(Type projectionType)
@@ -39,16 +49,6 @@ namespace Manta.Projections
         {
             var attr = type.GetCustomAttribute<DataContractAttribute>();
             return attr == null ? type.FullName : attr.Name;
-        }
-
-        public Type ProjectionType { get; }
-        public string ContractName { get; }
-        public HashSet<Type> MessageTypes { get; }
-        public long CurrentPosition => Checkpoint?.Position ?? 0;
-        public DateTime? DroppedAtUtc => Checkpoint?.DroppedAtUtc;
-        public bool IsDropped()
-        {
-            return DroppedAtUtc != null;
         }
 
         internal IProjectionCheckpoint Checkpoint { get; set; }

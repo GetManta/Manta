@@ -38,7 +38,7 @@ namespace Manta.Projections
         public int BatchSize { get; }
         internal ILogger Logger { get; private set; }
 
-        public IEnumerable<IProjectionDescriptor> GetProjections()
+        public IEnumerable<ProjectionDescriptor> GetProjections()
         {
             return _projectionDescriptors;
         }
@@ -154,9 +154,9 @@ namespace Manta.Projections
         protected IProjectionFactory ProjectionFactory { get; private set; }
         protected List<ProjectionDescriptor> GetActiveDescriptors() => _projectionDescriptors.Where(x => x.Checkpoint.DroppedAtUtc == null).ToList();
 
-        protected async Task UpdateDescriptor(ProjectionDescriptor descriptor, CancellationToken token)
+        protected internal async Task UpdateCheckpoint(IProjectionCheckpoint checkpoint, CancellationToken token)
         {
-            await _checkpointRepository.Update(descriptor.Checkpoint, token).NotOnCapturedContext();
+            await _checkpointRepository.Update(checkpoint, token).NotOnCapturedContext();
         }
 
         protected void ProjectingError(ProjectingException exception)
