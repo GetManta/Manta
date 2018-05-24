@@ -197,8 +197,7 @@ namespace Manta.Projections
                 {
                     foreach (var envelope in envelopes)
                     {
-                        if (descriptor.Checkpoint.Position >= envelope.Meta.MessagePosition) continue;
-                        if (!descriptor.IsProjecting(envelope.Message.GetType())) continue;
+                        if (!descriptor.CanDispatch(envelope.Message.GetType(), envelope.Meta.MessagePosition)) continue;
 
                         context.Reset();
                         if (await DispatchProjection(descriptor, envelope, context).NotOnCapturedContext())

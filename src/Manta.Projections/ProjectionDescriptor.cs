@@ -48,6 +48,11 @@ namespace Manta.Projections
             Checkpoint.DroppedAtUtc = DateTime.UtcNow;
         }
 
+        internal void Undrop()
+        {
+            Checkpoint.DroppedAtUtc = null;
+        }
+
         internal bool IsProjecting(Type messageType)
         {
             return MessageTypes.Contains(messageType);
@@ -98,6 +103,14 @@ namespace Manta.Projections
             var body = Expression.Call(castTarget, methodInfo, messageCastParam, metadataParam, projectingContextParam);
 
             return Expression.Lambda<Func<object, object, IMetadata, ProjectingContext, Task>>(body, target, messageParam, metadataParam, projectingContextParam).Compile();
+        }
+
+        internal bool CanDispatch(Type messageType, long messagePosition)
+        {
+            if (Checkpoint.Position >= messagePosition) return false;
+            if (!IsProjecting(messageType)) return false;
+
+            return true;
         }
     }
 }
