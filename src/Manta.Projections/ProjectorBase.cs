@@ -15,6 +15,7 @@ namespace Manta.Projections
         private readonly IProjectionCheckpointRepository _checkpointRepository;
         private readonly List<ProjectionDescriptor> _projectionDescriptors;
         private Action<ProjectingException> _onProjectionError;
+        private Action<ProjectorStats> _onProjectorExecute;
 
         protected ProjectorBase(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, ISerializer serializer, int batchSize)
         {
@@ -95,6 +96,12 @@ namespace Manta.Projections
             return this;
         }
 
+        public ProjectorBase WithStatistics(Action<ProjectorStats> stats)
+        {
+            _onProjectorExecute = stats;
+            return this;
+        }
+
         public ProjectorBase OnProjectingError(Action<ProjectingException> onProjectionError)
         {
             _onProjectionError = onProjectionError;
@@ -103,7 +110,7 @@ namespace Manta.Projections
 
         public async Task<DispatchingResult[]> Run(CancellationToken cancellationToken = default(CancellationToken))
         {
-            await PrepareCheckpoints(cancellationToken).NotOnCapturedContext();
+            await InitializeCheckpoints(cancellationToken).NotOnCapturedContext();
 
             var stats = new List<DispatchingResult>();
             while (true)
@@ -120,46 +127,33 @@ namespace Manta.Projections
                 if (results.All(x => x.AnyDispatched == false)) break;
             }
 
-            PrintStats(stats);
+            _onProjectorExecute?.Invoke(new ProjectorStats(stats));
+
             return stats.ToArray();
         }
 
-        // This method is here until version 1.0.0
-        private static void PrintStats(List<DispatchingResult> results)
-        {
-            var totalMessages = results.Sum(x => x.EnvelopesCount);
-            if (totalMessages == 0)
-            {
-                Console.Write(".");
-                return;
-            }
-            var totalTime = (double)results.Sum(x => x.ElapsedMilliseconds) / 1000;
-            var avg = Math.Round(totalMessages / totalTime, 2, MidpointRounding.AwayFromZero);
-            Console.WriteLine($"Total time {totalTime}sec | Processed {totalMessages} | Average processing {avg}/sec");
-        }
+        internal abstract Task<List<DispatchingResult>> RunOnce(CancellationToken token);
 
-        internal abstract Task<List<DispatchingResult>> RunOnce(CancellationToken cancellationToken);
-
-        private async Task PrepareCheckpoints(CancellationToken cancellationToken)
+        public async Task InitializeCheckpoints(CancellationToken token = default(CancellationToken))
         {
-            var checkpoints = (await _checkpointRepository.Fetch(cancellationToken).NotOnCapturedContext()).ToList();
+            var checkpoints = (await _checkpointRepository.Fetch(token).NotOnCapturedContext()).ToList();
             foreach (var descriptor in _projectionDescriptors)
             {
-                descriptor.Checkpoint = checkpoints.FirstOrDefault(x => x.ProjectionName == descriptor.ContractName)
-                    ?? await _checkpointRepository.AddCheckpoint(Name, descriptor.ContractName, cancellationToken).NotOnCapturedContext();
+                descriptor.SetCheckpoint(checkpoints.FirstOrDefault(x => x.ProjectionName == descriptor.ContractName)
+                    ?? await _checkpointRepository.AddCheckpoint(Name, descriptor.ContractName, token).NotOnCapturedContext());
             }
 
             await _checkpointRepository.Delete(
                 checkpoints.Where(x => _projectionDescriptors.All(z => z.Checkpoint != x)).ToArray(),
-                cancellationToken).NotOnCapturedContext();
+                token).NotOnCapturedContext();
         }
 
         protected IProjectionFactory ProjectionFactory { get; private set; }
         protected List<ProjectionDescriptor> GetActiveDescriptors() => _projectionDescriptors.Where(x => x.Checkpoint.DroppedAtUtc == null).ToList();
 
-        protected internal async Task UpdateCheckpoint(IProjectionCheckpoint checkpoint, CancellationToken token)
+        protected internal async Task UpdateCheckpoint(IProjectionCheckpoint checkpoint, bool undropRequested, CancellationToken token)
         {
-            await _checkpointRepository.Update(checkpoint, token).NotOnCapturedContext();
+            await _checkpointRepository.Update(checkpoint, undropRequested, token).NotOnCapturedContext();
         }
 
         protected void ProjectingError(ProjectingException exception)

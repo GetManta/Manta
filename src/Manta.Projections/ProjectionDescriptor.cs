@@ -30,10 +30,16 @@ namespace Manta.Projections
         public string ContractName { get; }
         public HashSet<Type> MessageTypes { get; }
         public long CurrentPosition => Checkpoint?.Position ?? 0;
+        public bool UndropRequested { get; private set; }
         public DateTime? DroppedAtUtc => Checkpoint?.DroppedAtUtc;
         public bool IsDropped()
         {
             return DroppedAtUtc != null;
+        }
+
+        public void Undrop()
+        {
+            UndropRequested = true;
         }
 
         internal Task Invoke(Projection instance, object message, IMetadata metadata, ProjectingContext context)
@@ -41,7 +47,17 @@ namespace Manta.Projections
             return _delegates[message.GetType()](instance, message, metadata, context);
         }
 
-        internal IProjectionCheckpoint Checkpoint { get; set; }
+        internal void SetCheckpoint(IProjectionCheckpoint checkpoint)
+        {
+            Checkpoint = checkpoint;
+            if (UndropRequested)
+            {
+                Checkpoint.DroppedAtUtc = null;
+                UndropRequested = false;
+            }
+        }
+
+        internal IProjectionCheckpoint Checkpoint { get; private set; }
 
         internal void Drop()
         {
@@ -98,6 +114,14 @@ namespace Manta.Projections
             var body = Expression.Call(castTarget, methodInfo, messageCastParam, metadataParam, projectingContextParam);
 
             return Expression.Lambda<Func<object, object, IMetadata, ProjectingContext, Task>>(body, target, messageParam, metadataParam, projectingContextParam).Compile();
+        }
+
+        internal bool CanDispatch(Type messageType, long messagePosition)
+        {
+            if (Checkpoint.Position >= messagePosition) return false;
+            if (!IsProjecting(messageType)) return false;
+
+            return true;
         }
     }
 }

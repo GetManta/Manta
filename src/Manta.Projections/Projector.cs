@@ -197,8 +197,7 @@ namespace Manta.Projections
                 {
                     foreach (var envelope in envelopes)
                     {
-                        if (descriptor.Checkpoint.Position >= envelope.Meta.MessagePosition) continue;
-                        if (!descriptor.IsProjecting(envelope.Message.GetType())) continue;
+                        if (!descriptor.CanDispatch(envelope.Message.GetType(), envelope.Meta.MessagePosition)) continue;
 
                         context.Reset();
                         if (await DispatchProjection(descriptor, envelope, context).NotOnCapturedContext())
@@ -208,7 +207,7 @@ namespace Manta.Projections
                         }
                     }
 
-                    await UpdateCheckpoint(descriptor.Checkpoint, token).NotOnCapturedContext();
+                    await UpdateCheckpoint(descriptor.Checkpoint, descriptor.UndropRequested, token).NotOnCapturedContext();
                     scope.Complete();
                 }
                 sw.Stop();
@@ -218,7 +217,7 @@ namespace Manta.Projections
             {
                 sw.Stop();
                 descriptor.Checkpoint.Position = context.StartingBatchAtPosition; // restoring position
-                await UpdateCheckpoint(descriptor.Checkpoint, token).NotOnCapturedContext();
+                await UpdateCheckpoint(descriptor.Checkpoint, descriptor.UndropRequested, token).NotOnCapturedContext();
                 return DispatchingResult.DroppedOnException(descriptor, envelopes.Count, sw.ElapsedMilliseconds, e);
             }
         }

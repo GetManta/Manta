@@ -20,6 +20,7 @@ namespace Manta.Projections.MsSql.Benchmarks
             var projector = new MsSqlProjector("StaticUniqueProjectorName", connectionString, new JilSerializer())
                 .AddProjections(typeof(TestProjection).Assembly, t => t.Namespace.StartsWith("Manta.Projections.MsSql.Benchmarks.TestProjections"))
                 .AddLogger(new NullLogger())
+                .WithStatistics(s => Console.WriteLine(s.ToString()))
                 .OnProjectingError(
                     x =>
                     {

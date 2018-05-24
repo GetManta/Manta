@@ -68,6 +68,31 @@ namespace Manta.Projections.MsSql.Tests
             Assert.NotNull(results.FirstOrDefault(x => x.Status == DispatchingResult.Statuses.DroppedOnException && x.Descriptor.CurrentPosition == expectedPositionForThrowingProjection));
         }
 
+        [Fact]
+        public async void undropping_projection_should_have_impact_only_between_executions()
+        {
+            var store = await GetMessageStore();
+            const string streamName = "test-321";
+            var data = GetUncommitedMessages();
+
+            await store.AppendToStream(streamName, ExpectedVersion.Any, data).NotOnCapturedContext();
+            using (var linearizer = new MsSqlLinearizer(ConnectionString, new NullLogger()))
+            {
+                await linearizer.Run().NotOnCapturedContext();
+            }
+
+            var projector = await GetProjector(c => c.AddProjection<TestProjection>().AddProjection<TestProjectionWithExceptionOnMessageOne>());
+            var results = await projector.Run();
+
+            var droppedProjection = results.FirstOrDefault(x => x.Status == DispatchingResult.Statuses.DroppedOnException);
+
+            droppedProjection.Descriptor.Undrop();
+
+            results = await projector.Run();
+
+            Assert.NotNull(results.FirstOrDefault(x => x.Status == DispatchingResult.Statuses.DroppedOnException));
+        }
+
         private static UncommittedMessages GetUncommitedMessages()
         {
             var serializer = new JilSerializer();
