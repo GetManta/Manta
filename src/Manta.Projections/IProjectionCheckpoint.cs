@@ -6,6 +6,7 @@ namespace Manta.Projections
     {
         string ProjectorName { get; }
         string ProjectionName { get; }
+        DateTime LastPositionUpdatedAtUtc { get; }
         long Position { get; set; }
         DateTime? DroppedAtUtc { get; set; }
     }

@@ -7,6 +7,7 @@ namespace Manta.Projections.MsSql
         public string ProjectorName { get; set; }
         public string ProjectionName { get; set; }
         public long Position { get; set; }
+        public DateTime LastPositionUpdatedAtUtc { get; set; }
         public DateTime? DroppedAtUtc { get; set; }
     }
 }
