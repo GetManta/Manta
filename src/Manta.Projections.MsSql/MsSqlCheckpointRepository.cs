@@ -10,10 +10,10 @@ namespace Manta.Projections.MsSql
 {
     public class MsSqlCheckpointRepository : IProjectionCheckpointRepository
     {
-        private const string spuFetchAllProjectionCheckpoints = "mantaFetchAllProjectionCheckpoints";
-        private const string spuAddProjectionCheckpoint = "mantaAddProjectionCheckpoint";
-        private const string spuDeleteProjectionCheckpoint = "mantaDeleteProjectionCheckpoint";
-        private const string spuUpdateProjectionCheckpoint = "mantaUpdateProjectionCheckpoint";
+        private const string spuFetchAllProjectionCheckpoints = "mantaFindCheckpoints";
+        private const string spuAddProjectionCheckpoint = "mantaAddCheckpoint";
+        private const string spuDeleteProjectionCheckpoint = "mantaDeleteCheckpoint";
+        private const string spuUpdateProjectionCheckpoint = "mantaUpdateCheckpoint";
 
         private const byte colIndexForProjectorName = 0;
         private const byte colIndexForProjectionName = 1;

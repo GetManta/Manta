@@ -12,7 +12,7 @@ namespace Manta.Projections.MsSql.Installer
 EXEC sys.sp_updateextendedproperty 
     @name = 'Version', @VALUE = @Version,
     @level0type = 'SCHEMA', @level0name = 'dbo', 
-    @level1type = 'Table', @level1name = 'StreamsProjectionCheckpoints';";
+    @level1type = 'Table', @level1name = 'MantaCheckpoints';";
 
         private const string mantaGetVersion = @"
 SELECT 
@@ -21,7 +21,7 @@ FROM
     sys.extended_properties AS p
     INNER JOIN sys.TABLES tbl ON tbl.object_id = p.major_id
 WHERE
-    p.name <> 'MS_Description' AND p.class = 1 AND tbl.name = 'StreamsProjectionCheckpoints';";
+    p.name <> 'MS_Description' AND p.class = 1 AND tbl.name = 'MantaCheckpoints';";
 
         public static SqlCommand CreateCommandForGetVersion(this SqlConnection cnn)
         {
