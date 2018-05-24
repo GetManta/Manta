@@ -59,7 +59,7 @@ namespace Manta.Projections.MsSql
             }
         }
 
-        public async Task Update(IProjectionCheckpoint checkpoint, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task Update(IProjectionCheckpoint checkpoint, bool undropRequested, CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var cnn = new SqlConnection(_connectionString))
             {
@@ -70,7 +70,7 @@ namespace Manta.Projections.MsSql
                 cmd.AddInputParam("@ProjectorName", SqlDbType.VarChar, checkpoint.ProjectorName, 128);
                 cmd.AddInputParam("@ProjectionName", SqlDbType.VarChar, checkpoint.ProjectionName, 128);
                 cmd.AddInputParam("@Position", SqlDbType.BigInt, checkpoint.Position);
-                cmd.AddInputParam("@DroppedAtUtc", SqlDbType.DateTime2, checkpoint.DroppedAtUtc ?? (object)DBNull.Value);
+                cmd.AddInputParam("@DroppedAtUtc", SqlDbType.DateTime2, checkpoint.DroppedAtUtc != null && !undropRequested ? checkpoint.DroppedAtUtc.Value : (object)DBNull.Value);
                 await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
             }
         }

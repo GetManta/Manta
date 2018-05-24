@@ -139,8 +139,8 @@ namespace Manta.Projections
             var checkpoints = (await _checkpointRepository.Fetch(token).NotOnCapturedContext()).ToList();
             foreach (var descriptor in _projectionDescriptors)
             {
-                descriptor.Checkpoint = checkpoints.FirstOrDefault(x => x.ProjectionName == descriptor.ContractName)
-                    ?? await _checkpointRepository.AddCheckpoint(Name, descriptor.ContractName, token).NotOnCapturedContext();
+                descriptor.SetCheckpoint(checkpoints.FirstOrDefault(x => x.ProjectionName == descriptor.ContractName)
+                    ?? await _checkpointRepository.AddCheckpoint(Name, descriptor.ContractName, token).NotOnCapturedContext());
             }
 
             await _checkpointRepository.Delete(
@@ -151,9 +151,9 @@ namespace Manta.Projections
         protected IProjectionFactory ProjectionFactory { get; private set; }
         protected List<ProjectionDescriptor> GetActiveDescriptors() => _projectionDescriptors.Where(x => x.Checkpoint.DroppedAtUtc == null).ToList();
 
-        protected internal async Task UpdateCheckpoint(IProjectionCheckpoint checkpoint, CancellationToken token)
+        protected internal async Task UpdateCheckpoint(IProjectionCheckpoint checkpoint, bool undropRequested, CancellationToken token)
         {
-            await _checkpointRepository.Update(checkpoint, token).NotOnCapturedContext();
+            await _checkpointRepository.Update(checkpoint, undropRequested, token).NotOnCapturedContext();
         }
 
         protected void ProjectingError(ProjectingException exception)

@@ -207,7 +207,7 @@ namespace Manta.Projections
                         }
                     }
 
-                    await UpdateCheckpoint(descriptor.Checkpoint, token).NotOnCapturedContext();
+                    await UpdateCheckpoint(descriptor.Checkpoint, descriptor.UndropRequested, token).NotOnCapturedContext();
                     scope.Complete();
                 }
                 sw.Stop();
@@ -217,7 +217,7 @@ namespace Manta.Projections
             {
                 sw.Stop();
                 descriptor.Checkpoint.Position = context.StartingBatchAtPosition; // restoring position
-                await UpdateCheckpoint(descriptor.Checkpoint, token).NotOnCapturedContext();
+                await UpdateCheckpoint(descriptor.Checkpoint, descriptor.UndropRequested, token).NotOnCapturedContext();
                 return DispatchingResult.DroppedOnException(descriptor, envelopes.Count, sw.ElapsedMilliseconds, e);
             }
         }
