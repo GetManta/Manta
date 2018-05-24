@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[Streams](
+﻿CREATE TABLE [dbo].[MantaStreams](
     [InternalId] [bigint] IDENTITY(1,1) NOT NULL,
     [Name] [varchar](255) COLLATE Latin1_General_BIN2 NOT NULL,
     [MessageVersion] [int] NOT NULL,
@@ -9,7 +9,7 @@
     [Payload] [varbinary](MAX) NOT NULL,
     [MetadataPayload] [varbinary](MAX) NULL,
     [MessagePosition] [bigint] NULL,
-    CONSTRAINT [PK_Streams] PRIMARY KEY CLUSTERED
+    CONSTRAINT [PK_MantaStreams] PRIMARY KEY CLUSTERED
     (
         [Name] ASC,
         [MessageVersion] ASC
@@ -19,36 +19,36 @@
 EXEC sys.sp_addextendedproperty
     @name = 'Version', @VALUE = N'1.0.0',
     @level0type = 'SCHEMA', @level0name = 'dbo',
-    @level1type = 'Table', @level1name = 'Streams';
+    @level1type = 'Table', @level1name = 'MantaStreams';
 
-CREATE NONCLUSTERED INDEX [IX_Streams_MessagePosition_InternalId] ON [dbo].[Streams]
+CREATE NONCLUSTERED INDEX [IX_MantaStreams_MessagePosition_InternalId] ON [dbo].[MantaStreams]
 (
     [MessagePosition] ASC,
     [InternalId] ASC
 );
 
 -- For idempotency checking
-CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_MessageId] ON [dbo].[Streams]
+CREATE UNIQUE NONCLUSTERED INDEX [IX_MantaStreams_MessageId] ON [dbo].[MantaStreams]
 (
     [MessageId] ASC
 );
 
-CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_InternalId] ON [dbo].[Streams]
+CREATE UNIQUE NONCLUSTERED INDEX [IX_MantaStreams_InternalId] ON [dbo].[MantaStreams]
 (
     [InternalId] ASC
 );
 
-CREATE TABLE [dbo].[StreamsStats](
+CREATE TABLE [dbo].[MantaStreamsStats](
     [InternalId] [int] NOT NULL,
     [MaxMessagePosition] [bigint] NOT NULL DEFAULT(0),
     [CountOfAllMessages] [bigint] NOT NULL DEFAULT(0),
-    CONSTRAINT [PK_StreamsStats] PRIMARY KEY CLUSTERED
+    CONSTRAINT [PK_MantaStreamsStats] PRIMARY KEY CLUSTERED
     (
         [InternalId] ASC
     )
 );
 
-INSERT INTO [dbo].[StreamsStats]([InternalId],[MaxMessagePosition],[CountOfAllMessages])VALUES(1,0,0);
+INSERT INTO [dbo].[MantaStreamsStats]([InternalId],[MaxMessagePosition],[CountOfAllMessages])VALUES(1,0,0);
 GO
 
 CREATE PROCEDURE [dbo].[mantaAppendAnyVersion]
@@ -64,7 +64,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload],[MetadataPayload])
+    INSERT INTO [dbo].[MantaStreams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload],[MetadataPayload])
     SELECT TOP 1
         @StreamName,
         IsNull(MAX(s.[MessageVersion]), 0) + 1,
@@ -74,7 +74,7 @@ BEGIN
         @Payload,
         @MetadataPayload
     FROM
-        [Streams] s WITH(READPAST,ROWLOCK)
+        [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK)
     WHERE
         s.[Name] = @StreamName
 END;
@@ -94,11 +94,11 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF EXISTS(SELECT TOP 1 1 FROM [Streams] s WITH(READPAST,ROWLOCK) WHERE s.[MessageId]=@MessageId) BEGIN
+    IF EXISTS(SELECT TOP 1 1 FROM [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK) WHERE s.[MessageId]=@MessageId) BEGIN
         RETURN; -- idempotency checking
     END
 
-    INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload],[MetadataPayload])
+    INSERT INTO [dbo].[MantaStreams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload],[MetadataPayload])
     SELECT TOP 1
         s.[Name],
         @MessageVersion,
@@ -108,7 +108,7 @@ BEGIN
         @Payload,
         @MetadataPayload
     FROM
-        [Streams] s WITH(READPAST,ROWLOCK)
+        [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK)
     WHERE
         s.[Name] = @StreamName
         AND s.[MessageVersion] = (@MessageVersion - 1)
@@ -131,7 +131,7 @@ CREATE PROCEDURE [dbo].[mantaAppendNoStream]
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO [Streams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload],[MetadataPayload])
+    INSERT INTO [dbo].[MantaStreams]([Name],[MessageVersion],[MessageId],[CorrelationId],[ContractName],[Payload],[MetadataPayload])
     VALUES(@StreamName,1,@MessageId,@CorrelationId,@ContractName,@Payload,@MetadataPayload)
 END;
 GO
@@ -151,7 +151,7 @@ BEGIN
         s.[ContractName],
         s.[Payload]
     FROM
-        [Streams] s WITH(READPAST,ROWLOCK)
+        [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK)
     WHERE
         s.[Name] = @StreamName
         AND s.[MessageVersion] >= @FromVersion
@@ -175,7 +175,7 @@ BEGIN
         s.[ContractName],
         s.[Payload]
     FROM
-        [Streams] s WITH(READPAST,ROWLOCK)
+        [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK)
     WHERE
         s.[Name] = @StreamName
         AND s.[MessageVersion] = @MessageVersion
@@ -191,21 +191,21 @@ BEGIN
     SET NOCOUNT ON;
     DECLARE @MessagePosition BIGINT
 
-    SELECT @MessagePosition = IsNull(MAX(s.[MessagePosition]), 0) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] > 0
+    SELECT @MessagePosition = IsNull(MAX(s.[MessagePosition]), 0) FROM [dbo].[MantaStreams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] > 0
 
     UPDATE dest SET
         @MessagePosition = [MessagePosition] = @MessagePosition + 1
     FROM
-        [Streams] dest WITH (INDEX ([IX_Streams_InternalId]))
-        INNER JOIN (SELECT TOP(@BatchSize) s.[InternalId] FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC) src ON src.[InternalId] = dest.[InternalId]
+        [dbo].[MantaStreams] dest WITH (INDEX ([IX_MantaStreams_InternalId]))
+        INNER JOIN (SELECT TOP(@BatchSize) s.[InternalId] FROM [dbo].[MantaStreams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC) src ON src.[InternalId] = dest.[InternalId]
     OPTION (MAXDOP 1)
 
     -- Update stats
-    UPDATE StreamsStats SET
+    UPDATE [dbo].[MantaStreamsStats] SET
         MaxMessagePosition = @MessagePosition,
-        CountOfAllMessages = (SELECT SUM(st.row_count) FROM sys.dm_db_partition_stats st WHERE OBJECT_NAME(object_id) = 'Streams' AND (index_id < 2))
+        CountOfAllMessages = (SELECT SUM(st.row_count) FROM sys.dm_db_partition_stats st WHERE OBJECT_NAME(object_id) = 'MantaStreams' AND (index_id < 2))
 
-    SELECT TOP 1 CAST(1 AS BIT) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL
+    SELECT TOP 1 CAST(1 AS BIT) FROM [dbo].[MantaStreams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL
 END;
 GO
 
@@ -213,7 +213,7 @@ CREATE PROCEDURE [dbo].[mantaReadHeadMessagePosition]
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT TOP(1) [MaxMessagePosition] FROM [StreamsStats] WITH (NOLOCK) WHERE [InternalId] = 1
+    SELECT TOP(1) [MaxMessagePosition] FROM [dbo].[MantaStreamsStats] WITH (NOLOCK) WHERE [InternalId] = 1
 END;
 GO
 
@@ -226,8 +226,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DELETE FROM [Streams] WHERE [Name] = @StreamName AND
-        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = @StreamName ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+    DELETE FROM [dbo].[MantaStreams] WHERE [Name] = @StreamName AND
+        (SELECT TOP(1) [MessageVersion] FROM [dbo].[MantaStreams] WHERE [Name] = @StreamName ORDER BY [MessageVersion] DESC) = @ExpectedVersion
 
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
@@ -245,8 +245,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DELETE s FROM [Streams] s WHERE s.[Name] = @StreamName AND s.[MessageVersion] <= @ToVersion AND
-        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = s.[Name] ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+    DELETE s FROM [dbo].[MantaStreams] s WHERE s.[Name] = @StreamName AND s.[MessageVersion] <= @ToVersion AND
+        (SELECT TOP(1) [MessageVersion] FROM [dbo].[MantaStreams] WHERE [Name] = s.[Name] ORDER BY [MessageVersion] DESC) = @ExpectedVersion
 
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
@@ -264,11 +264,11 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF(SELECT COUNT(1) FROM [Streams] s WHERE s.[Name] = @StreamName AND s.[Timestamp] <= @ToCreationDate) = 0
+    IF(SELECT COUNT(1) FROM [dbo].[MantaStreams] s WHERE s.[Name] = @StreamName AND s.[Timestamp] <= @ToCreationDate) = 0
         RETURN;
 
-    DELETE s FROM [Streams] s WHERE s.[Name] = @StreamName AND s.[Timestamp] <= @ToCreationDate AND
-        (SELECT TOP(1) [MessageVersion] FROM [Streams] WHERE [Name] = s.[Name] ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+    DELETE s FROM [dbo].[MantaStreams] s WHERE s.[Name] = @StreamName AND s.[Timestamp] <= @ToCreationDate AND
+        (SELECT TOP(1) [MessageVersion] FROM [dbo].[MantaStreams] WHERE [Name] = s.[Name] ORDER BY [MessageVersion] DESC) = @ExpectedVersion
 
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
@@ -295,7 +295,7 @@ BEGIN
         s.[Payload] AS [MessagePayload],
         s.[MetadataPayload]
     FROM
-        [Streams] s WITH(READPAST,ROWLOCK)
+        [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK)
     WHERE
         s.[MessagePosition] > @FromPosition
     ORDER BY

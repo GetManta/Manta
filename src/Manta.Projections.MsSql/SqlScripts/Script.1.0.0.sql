@@ -1,10 +1,10 @@
-﻿CREATE TABLE [dbo].[StreamsProjectionCheckpoints](
+﻿CREATE TABLE [dbo].[MantaCheckpoints](
     [ProjectorName] [varchar](128) COLLATE Latin1_General_BIN2 NOT NULL,
     [ProjectionName] [varchar](128) COLLATE Latin1_General_BIN2 NOT NULL,
     [Position] [bigint] NOT NULL DEFAULT(0),
     [LastPositionUpdatedAtUtc] [datetime2](3) NOT NULL DEFAULT(getutcdate()),
     [DroppedAtUtc] [datetime2](3) NULL,
-    CONSTRAINT [PK_StreamsProjectionCheckpoints] PRIMARY KEY CLUSTERED
+    CONSTRAINT [PK_MantaCheckpoints] PRIMARY KEY CLUSTERED
     (
         [ProjectorName] ASC,
         [ProjectionName] ASC
@@ -14,11 +14,10 @@
 EXEC sys.sp_addextendedproperty
     @name = 'Version', @VALUE = N'1.0.0',
     @level0type = 'SCHEMA', @level0name = 'dbo',
-    @level1type = 'Table', @level1name = 'StreamsProjectionCheckpoints';
-
+    @level1type = 'Table', @level1name = 'MantaCheckpoints';
 GO
 
-CREATE PROCEDURE [dbo].[mantaFetchAllProjectionCheckpoints]
+CREATE PROCEDURE [dbo].[mantaFindCheckpoints]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -29,11 +28,11 @@ BEGIN
         s.LastPositionUpdatedAtUtc,
         s.DroppedAtUtc
     FROM
-        StreamsProjectionCheckpoints s
+        [dbo].[MantaCheckpoints] s
 END;
 GO
 
-CREATE PROCEDURE [dbo].[mantaAddProjectionCheckpoint]
+CREATE PROCEDURE [dbo].[mantaAddCheckpoint]
 (
     @ProjectorName VARCHAR(128),
     @ProjectionName VARCHAR(128)
@@ -41,12 +40,12 @@ CREATE PROCEDURE [dbo].[mantaAddProjectionCheckpoint]
 AS
 BEGIN
     SET NOCOUNT ON;
-    INSERT INTO StreamsProjectionCheckpoints(ProjectorName, ProjectionName)
+    INSERT INTO [dbo].[MantaCheckpoints](ProjectorName, ProjectionName)
     VALUES(@ProjectorName, @ProjectionName)
 END;
 GO
 
-CREATE PROCEDURE [dbo].[mantaDeleteProjectionCheckpoint]
+CREATE PROCEDURE [dbo].[mantaDeleteCheckpoint]
 (
     @ProjectorName VARCHAR(128),
     @ProjectionName VARCHAR(128)
@@ -54,12 +53,12 @@ CREATE PROCEDURE [dbo].[mantaDeleteProjectionCheckpoint]
 AS
 BEGIN
     SET NOCOUNT ON;
-    DELETE FROM StreamsProjectionCheckpoints
+    DELETE FROM [dbo].[MantaCheckpoints]
     WHERE ProjectorName = @ProjectorName AND ProjectionName = @ProjectionName
 END;
 GO
 
-CREATE PROCEDURE [dbo].[mantaUpdateProjectionCheckpoint]
+CREATE PROCEDURE [dbo].[mantaUpdateCheckpoint]
 (
     @ProjectorName VARCHAR(128),
     @ProjectionName VARCHAR(128),
@@ -69,7 +68,7 @@ CREATE PROCEDURE [dbo].[mantaUpdateProjectionCheckpoint]
 AS
 BEGIN
     SET NOCOUNT ON;
-    UPDATE StreamsProjectionCheckpoints SET Position = @Position, DroppedAtUtc = @DroppedAtUtc, LastPositionUpdatedAtUtc = getutcdate()
+    UPDATE [dbo].[MantaCheckpoints] SET Position = @Position, DroppedAtUtc = @DroppedAtUtc, LastPositionUpdatedAtUtc = getutcdate()
     WHERE ProjectorName = @ProjectorName AND ProjectionName = @ProjectionName
 END;
 GO

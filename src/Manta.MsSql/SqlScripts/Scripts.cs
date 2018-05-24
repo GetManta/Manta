@@ -11,8 +11,7 @@ namespace Manta.MsSql.SqlScripts
         {
             Queries = new Dictionary<string, string>
             {
-                { "1.0.0", Resources<MsSqlMessageStore>.Read("Manta.MsSql.SqlScripts.Script.1.0.0.sql") },
-                { "1.0.1", Resources<MsSqlMessageStore>.Read("Manta.MsSql.SqlScripts.Script.1.0.1.sql") }
+                { "1.0.0", Resources<MsSqlMessageStore>.Read("Manta.MsSql.SqlScripts.Script.1.0.0.sql") }
             };
         }
 

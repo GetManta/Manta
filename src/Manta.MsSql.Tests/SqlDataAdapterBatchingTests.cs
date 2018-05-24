@@ -37,11 +37,11 @@ namespace Manta.MsSql.Tests
                     initializeBatchingMethod(instance);
 
                     // First command for batch
-                    var command = new SqlCommand("UPDATE Streams SET [MessagePosition] = 0 WHERE [MessagePosition] = 0", cnn);
+                    var command = new SqlCommand("UPDATE [dbo].[MantaStreams] SET [MessagePosition] = 0 WHERE [MessagePosition] = 0", cnn);
                     addToBatchMethod(instance, command);
 
                     // Second command for batch
-                    command = new SqlCommand("UPDATE Streams SET [MessagePosition] = 1 WHERE [MessagePosition] = 1", cnn);
+                    command = new SqlCommand("UPDATE [dbo].[MantaStreams] SET [MessagePosition] = 1 WHERE [MessagePosition] = 1", cnn);
                     addToBatchMethod(instance, command);
 
                     cnn.Open();
