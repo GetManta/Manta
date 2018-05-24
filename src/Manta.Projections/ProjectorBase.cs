@@ -110,7 +110,7 @@ namespace Manta.Projections
 
         public async Task<DispatchingResult[]> Run(CancellationToken cancellationToken = default(CancellationToken))
         {
-            await PrepareCheckpoints(cancellationToken).NotOnCapturedContext();
+            await InitializeCheckpoints(cancellationToken).NotOnCapturedContext();
 
             var stats = new List<DispatchingResult>();
             while (true)
@@ -132,20 +132,20 @@ namespace Manta.Projections
             return stats.ToArray();
         }
 
-        internal abstract Task<List<DispatchingResult>> RunOnce(CancellationToken cancellationToken);
+        internal abstract Task<List<DispatchingResult>> RunOnce(CancellationToken token);
 
-        private async Task PrepareCheckpoints(CancellationToken cancellationToken)
+        public async Task InitializeCheckpoints(CancellationToken token = default(CancellationToken))
         {
-            var checkpoints = (await _checkpointRepository.Fetch(cancellationToken).NotOnCapturedContext()).ToList();
+            var checkpoints = (await _checkpointRepository.Fetch(token).NotOnCapturedContext()).ToList();
             foreach (var descriptor in _projectionDescriptors)
             {
                 descriptor.Checkpoint = checkpoints.FirstOrDefault(x => x.ProjectionName == descriptor.ContractName)
-                    ?? await _checkpointRepository.AddCheckpoint(Name, descriptor.ContractName, cancellationToken).NotOnCapturedContext();
+                    ?? await _checkpointRepository.AddCheckpoint(Name, descriptor.ContractName, token).NotOnCapturedContext();
             }
 
             await _checkpointRepository.Delete(
                 checkpoints.Where(x => _projectionDescriptors.All(z => z.Checkpoint != x)).ToArray(),
-                cancellationToken).NotOnCapturedContext();
+                token).NotOnCapturedContext();
         }
 
         protected IProjectionFactory ProjectionFactory { get; private set; }
