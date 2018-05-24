@@ -11,17 +11,18 @@ namespace Manta.Projections
     public class ProjectionDescriptor
     {
         private static readonly Type handlerType = typeof(IProjecting<>);
+        private readonly Dictionary<Type, Func<object, object, IMetadata, ProjectingContext, Task>> _delegates;
 
         internal ProjectionDescriptor(Type projectionType)
         {
             ProjectionType = projectionType;
             ContractName = GetContractName(ProjectionType);
             MessageTypes = FindMessageTypes(ProjectionType);
-            Delegates = new Dictionary<Type, Func<object, object, IMetadata, ProjectingContext, Task>>(MessageTypes.Count);
 
+            _delegates = new Dictionary<Type, Func<object, object, IMetadata, ProjectingContext, Task>>(MessageTypes.Count);
             foreach (var messageType in MessageTypes)
             {
-                Delegates.Add(messageType, GetOnMethodFunc(projectionType, messageType, handlerType));
+                _delegates.Add(messageType, GetOnMethodFunc(projectionType, messageType, handlerType));
             }
         }
 
@@ -35,7 +36,11 @@ namespace Manta.Projections
             return DroppedAtUtc != null;
         }
 
-        internal Dictionary<Type, Func<object, object, IMetadata, ProjectingContext, Task>> Delegates { get; }
+        internal Task Invoke(Projection instance, object message, IMetadata metadata, ProjectingContext context)
+        {
+            return _delegates[message.GetType()](instance, message, metadata, context);
+        }
+
         internal IProjectionCheckpoint Checkpoint { get; set; }
 
         internal void Drop()

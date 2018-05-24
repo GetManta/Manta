@@ -9,9 +9,8 @@ namespace Manta.Sceleton.Converters
 
         public IUpConvertMessage CreateInstanceFor(Type messageType)
         {
-            return (!Converters.TryGetValue(messageType, out var converter)
-                ? null
-                : Activator.CreateInstance(converter)) as IUpConvertMessage;
+            var t = GetConverterType(messageType);
+            return t == null ? null : Activator.CreateInstance(t) as IUpConvertMessage;
         }
     }
 }

@@ -254,17 +254,17 @@ namespace Manta.Projections
             }
         }
 
-        private async Task TryDispatch(ProjectionDescriptor projection, MessageEnvelope envelope, ProjectingContext context)
+        private async Task TryDispatch(ProjectionDescriptor descriptor, MessageEnvelope envelope, ProjectingContext context)
         {
             try
             {
-                var instance = ProjectionFactory.CreateProjectionInstance(projection.ProjectionType);
-                if (instance == null) throw new NullReferenceException($"Projection instance {projection.ProjectionType.FullName} is null.");
-                await projection.Delegates[envelope.Message.GetType()](instance, envelope.Message, envelope.Meta, context);
+                var instance = ProjectionFactory.CreateProjectionInstance(descriptor.ProjectionType);
+                if (instance == null) throw new NullReferenceException($"Projection instance {descriptor.ProjectionType.FullName} is null.");
+                await descriptor.Invoke(instance, envelope.Message, envelope.Meta, context);
             }
             catch (Exception e)
             {
-                throw new ProjectingException(projection, envelope, context, e);
+                throw new ProjectingException(descriptor, envelope, context, e);
             }
         }
     }
