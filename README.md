@@ -1,3 +1,5 @@
+![logo](docs/logo.png)
+
 # Manta
 Event store library for .NET Core based on rdbms persistance.
 
