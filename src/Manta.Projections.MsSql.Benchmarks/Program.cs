@@ -27,9 +27,9 @@ namespace Manta.Projections.MsSql.Benchmarks
                         Console.WriteLine($"Projecting error at position {x.Envelope.Meta.MessagePosition}[Retry: {x.Context.RetryAttempt}] with message: {x.InnerException.Message}.");
                     });
 
-            // ExecuteOnce(projector).Wait();
+            ExecuteOnce(projector).Wait();
 
-            ExecuteRunner(projector);
+            // ExecuteRunner(projector);
 
             Console.WriteLine("\r\nPress any key to exit...");
             Console.ReadKey();

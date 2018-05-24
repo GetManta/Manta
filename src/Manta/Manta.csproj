@@ -15,4 +15,8 @@
     <ProjectReference Include="..\Manta.Sceleton\Manta.Sceleton.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="InMemory\" />
+  </ItemGroup>
+
 </Project>

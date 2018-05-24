@@ -2,6 +2,7 @@
     [ProjectorName] [varchar](128) COLLATE Latin1_General_BIN2 NOT NULL,
     [ProjectionName] [varchar](128) COLLATE Latin1_General_BIN2 NOT NULL,
     [Position] [bigint] NOT NULL DEFAULT(0),
+    [LastPositionUpdatedAtUtc] [datetime2](3) NOT NULL DEFAULT(getutcdate()),
     [DroppedAtUtc] [datetime2](3) NULL,
     CONSTRAINT [PK_StreamsProjectionCheckpoints] PRIMARY KEY CLUSTERED
     (
@@ -25,6 +26,7 @@ BEGIN
         s.ProjectorName,
         s.ProjectionName,
         s.Position,
+        s.LastPositionUpdatedAtUtc,
         s.DroppedAtUtc
     FROM
         StreamsProjectionCheckpoints s
@@ -67,7 +69,7 @@ CREATE PROCEDURE [dbo].[mantaUpdateProjectionCheckpoint]
 AS
 BEGIN
     SET NOCOUNT ON;
-    UPDATE StreamsProjectionCheckpoints SET Position = @Position, DroppedAtUtc = @DroppedAtUtc
+    UPDATE StreamsProjectionCheckpoints SET Position = @Position, DroppedAtUtc = @DroppedAtUtc, LastPositionUpdatedAtUtc = getutcdate()
     WHERE ProjectorName = @ProjectorName AND ProjectionName = @ProjectionName
 END;
 GO

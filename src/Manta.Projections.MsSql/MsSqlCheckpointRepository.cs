@@ -18,7 +18,8 @@ namespace Manta.Projections.MsSql
         private const byte colIndexForProjectorName = 0;
         private const byte colIndexForProjectionName = 1;
         private const byte colIndexForPosition = 2;
-        private const byte colIndexForDroppedAtUtc = 3;
+        private const byte colIndexForLastPositionUpdatedAtUtc = 3;
+        private const byte colIndexForDroppedAtUtc = 4;
 
         private readonly string _connectionString;
 
@@ -48,6 +49,7 @@ namespace Manta.Projections.MsSql
                                 ProjectorName = reader.GetString(colIndexForProjectorName),
                                 ProjectionName = reader.GetString(colIndexForProjectionName),
                                 Position = reader.GetInt64(colIndexForPosition),
+                                LastPositionUpdatedAtUtc = reader.GetDateTime(colIndexForLastPositionUpdatedAtUtc),
                                 DroppedAtUtc = reader.IsDBNull(colIndexForDroppedAtUtc)
                                     ? null
                                     : (DateTime?)reader.GetDateTime(colIndexForDroppedAtUtc)
