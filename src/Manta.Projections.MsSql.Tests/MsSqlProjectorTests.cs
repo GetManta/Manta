@@ -65,7 +65,7 @@ namespace Manta.Projections.MsSql.Tests
             var projector = await GetProjector(c => c.AddProjection<TestProjection>().AddProjection<TestProjectionWithExceptionOnMessageOne>());
             var results = await projector.Run();
 
-            Assert.NotNull(results.SingleOrDefault(x => x.Status == DispatchingResult.Statuses.DroppedOnException && x.Descriptor.CurrentPosition == expectedPositionForThrowingProjection));
+            Assert.NotNull(results.FirstOrDefault(x => x.Status == DispatchingResult.Statuses.DroppedOnException && x.Descriptor.CurrentPosition == expectedPositionForThrowingProjection));
         }
 
         private static UncommittedMessages GetUncommitedMessages()

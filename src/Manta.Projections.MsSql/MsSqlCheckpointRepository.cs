@@ -75,7 +75,7 @@ namespace Manta.Projections.MsSql
             }
         }
 
-        public async Task Delete(IEnumerable<IProjectionCheckpoint> checkpoints, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task Delete(IProjectionCheckpoint[] checkpoints, CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var cnn = new SqlConnection(_connectionString))
             {

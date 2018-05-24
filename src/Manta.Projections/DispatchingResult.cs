@@ -41,7 +41,7 @@ namespace Manta.Projections
 
         internal static DispatchingResult DroppedOnException(ProjectionDescriptor descriptor, int envelopesCount, long elapsedMilliseconds, Exception exception)
         {
-            return new DispatchingResult(descriptor, Statuses.DroppedOnException, envelopesCount, elapsedMilliseconds, true, exception);
+            return new DispatchingResult(descriptor, Statuses.DroppedOnException, envelopesCount, elapsedMilliseconds, false, exception);
         }
 
         public enum Statuses : byte

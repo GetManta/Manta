@@ -43,11 +43,11 @@ namespace Manta.Projections
 
         private static object UpConvert(IUpConverterFactory upConverterFactory, Type messageType, object message)
         {
-            var upConverter = upConverterFactory.CreateInstanceFor(messageType);
-            while (upConverter != null)
+            var converter = upConverterFactory.CreateInstanceFor(messageType);
+            while (converter != null)
             {
-                message = ((dynamic)upConverter).Convert((dynamic)message);
-                upConverter = upConverterFactory.CreateInstanceFor(message.GetType());
+                message = upConverterFactory.Execute(converter, messageType, message);
+                converter = upConverterFactory.CreateInstanceFor(message.GetType());
             }
             return message;
         }

@@ -51,8 +51,6 @@ namespace Manta.Projections.MsSql
                         rows++;
                     }
                 }
-
-                buffer.Complete();
                 return rows;
             }
         }

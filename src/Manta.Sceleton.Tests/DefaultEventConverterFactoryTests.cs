@@ -24,7 +24,7 @@ namespace Manta.Sceleton.Tests
             var sut = new DefaultUpConverterFactory(fakeContractType.Assembly);
 
             var converter = sut.CreateInstanceFor(fakeContractType);
-            var msg2 = ((dynamic)converter).Convert((dynamic)msg1);
+            var msg2 = sut.Execute(converter, fakeContractType, msg1);
             Assert.NotNull(msg2 as FakeContract2);
         }
 

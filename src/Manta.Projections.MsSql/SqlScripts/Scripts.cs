@@ -17,11 +17,11 @@ namespace Manta.Projections.MsSql.SqlScripts
 
         private static Dictionary<string, string> Queries { get; }
 
-        public static IEnumerable<string> GetScriptsFrom(Version version = null)
+        public static string[] GetScriptsFrom(Version version = null)
         {
             return version == null
-                ? Queries.Select(x => x.Value).ToList()
-                : Queries.Where(x => Version.Parse(x.Key) > version).Select(x => x.Value).ToList();
+                ? Queries.Select(x => x.Value).ToArray()
+                : Queries.Where(x => Version.Parse(x.Key) > version).Select(x => x.Value).ToArray();
         }
     }
 }

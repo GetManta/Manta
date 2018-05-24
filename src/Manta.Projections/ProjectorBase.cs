@@ -18,12 +18,15 @@ namespace Manta.Projections
 
         protected ProjectorBase(string name, IStreamDataSource dataSource, IProjectionCheckpointRepository checkpointRepository, ISerializer serializer, int batchSize)
         {
-            _checkpointRepository = checkpointRepository;
+            if (name.IsNullOrEmpty()) throw new ArgumentException("Name of projector must be set.", nameof(name));
+            if (batchSize <= 0) throw new ArgumentException("Batch size must be greater than zero.", nameof(batchSize));
+
+            _checkpointRepository = checkpointRepository ?? throw new ArgumentNullException(nameof(checkpointRepository));
             ProjectionFactory = new ActivatorProjectionFactory();
             Logger = new NullLogger();
             Name = name;
-            DataSource = dataSource;
-            Serializer = serializer;
+            DataSource = dataSource ?? throw new ArgumentNullException(nameof(dataSource));
+            Serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             BatchSize = batchSize;
             MaxProjectingRetries = 3;
 
@@ -38,9 +41,9 @@ namespace Manta.Projections
         public int BatchSize { get; }
         internal ILogger Logger { get; private set; }
 
-        public IEnumerable<ProjectionDescriptor> GetProjections()
+        public ProjectionDescriptor[] GetProjections()
         {
-            return _projectionDescriptors;
+            return _projectionDescriptors.ToArray();
         }
 
         public ProjectorBase AddProjection<TProjection>() where TProjection : Projection
@@ -98,7 +101,7 @@ namespace Manta.Projections
             return this;
         }
 
-        public async Task<IEnumerable<DispatchingResult>> Run(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<DispatchingResult[]> Run(CancellationToken cancellationToken = default(CancellationToken))
         {
             await PrepareCheckpoints(cancellationToken).NotOnCapturedContext();
 
@@ -111,17 +114,17 @@ namespace Manta.Projections
                 var resultWithException = results.FirstOrDefault(x => x.HaveCaughtException());
                 if (resultWithException != null)
                 {
-                    Console.WriteLine($"Exception: {resultWithException.Exception.Message}");
-                    return stats;
+                    Logger.Error("Projection '{0}' dropped and returns exception: {1}", resultWithException.Descriptor.ContractName, resultWithException.Exception.Message);
                 }
 
                 if (results.All(x => x.AnyDispatched == false)) break;
             }
 
             PrintStats(stats);
-            return stats;
+            return stats.ToArray();
         }
 
+        // This method is here until version 1.0.0
         private static void PrintStats(List<DispatchingResult> results)
         {
             var totalMessages = results.Sum(x => x.EnvelopesCount);
@@ -147,7 +150,7 @@ namespace Manta.Projections
             }
 
             await _checkpointRepository.Delete(
-                checkpoints.Where(x => _projectionDescriptors.All(z => z.Checkpoint != x)),
+                checkpoints.Where(x => _projectionDescriptors.All(z => z.Checkpoint != x)).ToArray(),
                 cancellationToken).NotOnCapturedContext();
         }
 
