@@ -48,7 +48,7 @@ namespace Manta.Projections.MsSql.Benchmarks
         private static void ExecuteRunner(ProjectorBase projector)
         {
             // each projector runner has own config about fetching limits / timeouts, etc
-            using (var runner = new Runner())
+            using (var runner = new ProjectorRunner())
             {
                 runner.Add(projector);
 
