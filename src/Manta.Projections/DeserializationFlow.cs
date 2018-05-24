@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Manta.Sceleton;
 using Manta.Sceleton.Converters;
 
@@ -19,26 +18,14 @@ namespace Manta.Projections
                 message = UpConvert(upConverterFactory, message.GetType(), message);
             }
 
-            var metadata = new Metadata
-            {
-                CustomMetadata = customMetadata,
-                CorrelationId = raw.CorrelationId,
-                MessageContractName = raw.MessageContractName,
-                MessageId = raw.MessageId,
-                MessagePosition = raw.MessagePosition,
-                MessageVersion = raw.MessageVersion,
-                StreamId = raw.StreamId,
-                Timestamp = raw.Timestamp
-            };
-
-            return new MessageEnvelope(metadata, message);
+            return new MessageEnvelope(message, customMetadata, raw);
         }
 
         private static object DeserializeMessage(ISerializer serializer, MessageRaw raw)
         {
             if (raw.MessagePayload == null) return null;
 
-            using (var reader = new StreamReader(new MemoryStream(raw.MessagePayload), Encoding.UTF8))
+            using (var reader = new StreamReader(raw.MessagePayload))
             {
                 return serializer.Deserialize(raw.MessageContractName, reader);
             }
@@ -48,7 +35,7 @@ namespace Manta.Projections
         {
             if (raw.MessageMetadataPayload == null) return null;
 
-            using (var reader = new StreamReader(new MemoryStream(raw.MessageMetadataPayload), Encoding.UTF8))
+            using (var reader = new StreamReader(raw.MessageMetadataPayload))
             {
                 return serializer.Deserialize<Dictionary<string, object>>(reader);
             }
@@ -56,11 +43,11 @@ namespace Manta.Projections
 
         private static object UpConvert(IUpConverterFactory upConverterFactory, Type messageType, object message)
         {
-            var upConverter = upConverterFactory.CreateInstanceFor(messageType);
-            while (upConverter != null)
+            var converter = upConverterFactory.CreateInstanceFor(messageType);
+            while (converter != null)
             {
-                message = ((dynamic)upConverter).Convert((dynamic)message);
-                upConverter = upConverterFactory.CreateInstanceFor(message.GetType());
+                message = upConverterFactory.Execute(converter, messageType, message);
+                converter = upConverterFactory.CreateInstanceFor(message.GetType());
             }
             return message;
         }

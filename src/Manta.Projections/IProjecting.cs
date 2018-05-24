@@ -4,6 +4,6 @@ namespace Manta.Projections
 {
     public interface IProjecting<in TMessage>
     {
-        Task On(TMessage m, Metadata meta, ProjectingContext context);
+        Task On(TMessage m, IMetadata meta, ProjectingContext context);
     }
 }

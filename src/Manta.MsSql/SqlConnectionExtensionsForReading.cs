@@ -1,7 +1,5 @@
-﻿using System;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
-using System.Threading;
 
 namespace Manta.MsSql
 {
@@ -45,10 +43,10 @@ namespace Manta.MsSql
         public static RecordedMessage GetRecordedMessage(this SqlDataReader reader)
         {
             return new RecordedMessage(
-                reader.GetFieldValue<Guid>(columnIndexForMessageId),
-                reader.GetFieldValue<int>(columnIndexForMessageVersion),
-                reader.GetFieldValue<string>(columnIndexForContractName),
-                reader.GetFieldValue<byte[]>(columnIndexForPayload));
+                reader.GetGuid(columnIndexForMessageId),
+                reader.GetInt32(columnIndexForMessageVersion),
+                reader.GetString(columnIndexForContractName),
+                reader.GetStream(columnIndexForPayload));
         }
     }
 }

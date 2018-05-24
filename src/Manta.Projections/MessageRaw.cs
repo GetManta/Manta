@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Manta.Projections
 {
@@ -10,8 +11,8 @@ namespace Manta.Projections
         public Guid MessageId;
         public long MessagePosition;
         public string MessageContractName;
-        public byte[] MessagePayload;
-        public byte[] MessageMetadataPayload;
+        public Stream MessagePayload;
+        public Stream MessageMetadataPayload;
         public DateTime Timestamp;
     }
 }

@@ -4,13 +4,13 @@ namespace Manta.Projections
 {
     public class DispatchingResult
     {
-        private DispatchingResult(IProjectionDescriptor descriptor, Statuses status)
+        private DispatchingResult(ProjectionDescriptor descriptor, Statuses status)
         {
             Descriptor = descriptor;
             Status = status;
         }
 
-        private DispatchingResult(IProjectionDescriptor descriptor, Statuses status, int envelopesCount, long elapsedMilliseconds, bool anyDispatched, Exception exception = null)
+        private DispatchingResult(ProjectionDescriptor descriptor, Statuses status, int envelopesCount, long elapsedMilliseconds, bool anyDispatched, Exception exception = null)
             : this(descriptor, status)
         {
             EnvelopesCount = envelopesCount;
@@ -19,7 +19,7 @@ namespace Manta.Projections
             Exception = exception;
         }
 
-        public IProjectionDescriptor Descriptor { get; }
+        public ProjectionDescriptor Descriptor { get; }
         public Statuses Status { get; }
 
         public int EnvelopesCount { get; }
@@ -32,16 +32,16 @@ namespace Manta.Projections
             return Exception != null;
         }
 
-        internal static DispatchingResult StillDropped(IProjectionDescriptor descriptor) => new DispatchingResult(descriptor, Statuses.StillDropped);
+        internal static DispatchingResult StillDropped(ProjectionDescriptor descriptor) => new DispatchingResult(descriptor, Statuses.StillDropped);
 
-        internal static DispatchingResult Dispatched(IProjectionDescriptor descriptor, int envelopesCount, long elapsedMilliseconds, bool anyDispatched)
+        internal static DispatchingResult Dispatched(ProjectionDescriptor descriptor, int envelopesCount, long elapsedMilliseconds, bool anyDispatched)
         {
             return new DispatchingResult(descriptor, Statuses.Dispatched, envelopesCount, elapsedMilliseconds, anyDispatched);
         }
 
-        internal static DispatchingResult DroppedOnException(IProjectionDescriptor descriptor, int envelopesCount, long elapsedMilliseconds, Exception exception)
+        internal static DispatchingResult DroppedOnException(ProjectionDescriptor descriptor, int envelopesCount, long elapsedMilliseconds, Exception exception)
         {
-            return new DispatchingResult(descriptor, Statuses.DroppedOnException, envelopesCount, elapsedMilliseconds, true, exception);
+            return new DispatchingResult(descriptor, Statuses.DroppedOnException, envelopesCount, elapsedMilliseconds, false, exception);
         }
 
         public enum Statuses : byte

@@ -15,7 +15,7 @@ namespace Manta.Projections.MsSql.Tests
         public MsSqlProjectorTests(LocalDbFixture fixture) : base(fixture) { }
 
         [Fact]
-        public async void running_projector_not_throws()
+        public async void running_projector_without_adding_projections_not_throws()
         {
             var projector = await GetProjector(c => c.AddProjections(typeof(TestContracts).Assembly));
 
@@ -65,7 +65,7 @@ namespace Manta.Projections.MsSql.Tests
             var projector = await GetProjector(c => c.AddProjection<TestProjection>().AddProjection<TestProjectionWithExceptionOnMessageOne>());
             var results = await projector.Run();
 
-            Assert.NotNull(results.SingleOrDefault(x => x.Status == DispatchingResult.Statuses.DroppedOnException && x.Descriptor.CurrentPosition == expectedPositionForThrowingProjection));
+            Assert.NotNull(results.FirstOrDefault(x => x.Status == DispatchingResult.Statuses.DroppedOnException && x.Descriptor.CurrentPosition == expectedPositionForThrowingProjection));
         }
 
         private static UncommittedMessages GetUncommitedMessages()
