@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="SqlScripts\Script.1.0.0.sql" />
-    <EmbeddedResource Include="SqlScripts\Script.1.0.1.sql" />
   </ItemGroup>
 
   <ItemGroup>
