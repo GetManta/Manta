@@ -4,7 +4,7 @@ Event store library for .NET Core based on rdbms persistance.
 *A thin (but powerful) slice of library between your code and rdbms.*
 
 # Status
-NOT READY FOR PRODUCTION YET
+ALMOST READY FOR PRODUCTION USAGE
 
 [![Build status](https://ci.appveyor.com/api/projects/status/rmy0b570j1ur2c58/branch/master?svg=true)](https://ci.appveyor.com/project/dario-l/manta/branch/master)
 
@@ -23,9 +23,10 @@ You can download source code from this repository and compile under Visual Studi
  - Support optimistic concurrency
  - Support any kind of message serialization
  - Support any kind of loggers through ILogger interface for Manta internal logging
- - MS SQL Server persistance implementation (with single-writer pattern for MS SQL Server implementation)
  - Support up-conversion of events to the newest version
  - Subscriptions to one or many event stream sources for processmanagers/projections/others
+ - MS SQL Server - Manta implementation (with single-writer pattern)
+ - MS SQL Server - Manta.Projections implementation
 
 last but not least, performance
 
@@ -36,6 +37,7 @@ last but not least, performance
 
 ### To be done
  - Manta - InMemory implementation
+ - Manta.Projections - InMemory implementation
  - Manta.PostgreSql - [PostgreSql](https://www.postgresql.org/) implementation
  - Manta.MySql - [MySql](https://www.mysql.com/) implementation
  - Manta.SqLite - [SqLite](https://www.sqlite.org/) implementation
@@ -88,4 +90,4 @@ await store.AppendToStream(
 If you're looking for documentation, you can find it [here](https://github.com/getmanta/manta/wiki) when it will be ready.
 
 # Contributing
-A contribution is welcome. Checkout [contributing rules](https://github.com/GetManta/manta/blob/master/CONTRIBUTING.md).
+A contribution is welcome. Checkout [contributing rules](https://github.com/getmanta/manta/blob/master/CONTRIBUTING.md).
