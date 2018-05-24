@@ -46,7 +46,7 @@ namespace Manta.Projections
             var converter = upConverterFactory.CreateInstanceFor(messageType);
             while (converter != null)
             {
-                message = upConverterFactory.Execute(converter, messageType, message);
+                message = upConverterFactory.Invoke(converter, messageType, message);
                 converter = upConverterFactory.CreateInstanceFor(message.GetType());
             }
             return message;

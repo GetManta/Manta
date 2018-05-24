@@ -7,15 +7,15 @@ using System.Reflection;
 namespace Manta.Sceleton.Converters
 {
     /// <inheritdoc />
-    public abstract class UpConverterFactoryBase : IUpConverterExecutor
+    public abstract class UpConverterFactoryBase : IUpConverterInvoker
     {
         private static readonly Type genericConverterType = typeof(IUpConvertMessage<,>);
-        protected readonly IDictionary<Type, Type> Converters;
+        private readonly IDictionary<Type, Type> _converters;
         private readonly Dictionary<Type, Func<object, object, object>> _delegates;
 
         protected UpConverterFactoryBase(params Assembly[] assemblies)
         {
-            Converters = new Dictionary<Type, Type>();
+            _converters = new Dictionary<Type, Type>();
             _delegates = new Dictionary<Type, Func<object, object, object>>();
             foreach (var assembly in assemblies)
             {
@@ -26,22 +26,27 @@ namespace Manta.Sceleton.Converters
                         .GetGenericArguments();
 
                     var messageType = genericArgs[0];
-                    if (Converters.ContainsKey(messageType)) continue;
+                    if (_converters.ContainsKey(messageType)) continue;
 
                     var outputMessageType = genericArgs[1];
 
-                    Converters.Add(messageType, converterType);
+                    _converters.Add(messageType, converterType);
                     _delegates.Add(messageType, GetConvertMethodFunc(converterType, messageType, outputMessageType, genericConverterType));
                 }
             }
         }
 
-        protected static bool IsConverter(Type type)
+        protected Type GetConverterType(Type messageType)
+        {
+            return _converters.TryGetValue(messageType, out var converterType) ? converterType : null;
+        }
+
+        private static bool IsConverter(Type type)
         {
             return typeof(IUpConvertMessage).IsAssignableFrom(type);
         }
 
-        public object Execute(IUpConvertMessage converter, Type messageType, object message)
+        public object Invoke(IUpConvertMessage converter, Type messageType, object message)
         {
             return _delegates[messageType](converter, message);
         }
