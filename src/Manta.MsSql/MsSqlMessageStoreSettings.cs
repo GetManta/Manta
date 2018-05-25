@@ -19,5 +19,11 @@ namespace Manta.MsSql
             Linearizer = new MsSqlLinearizer(ConnectionString, Logger, timeout, workDuration);
             return this;
         }
+
+        public MsSqlMessageStoreSettings WithLinearizer()
+        {
+            Linearizer = new MsSqlLinearizer(ConnectionString, Logger);
+            return this;
+        }
     }
 }
