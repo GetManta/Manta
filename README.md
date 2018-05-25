@@ -69,8 +69,9 @@ public class SomeEvent
 
 // Basic example of usage
 
+ISerializer serializer = new JilSerializer(); // You can use any type of serialization method
+ArraySegment<byte> payload = serializer.Serialize(ev);
 string contractName = GetContractNameBasedOnEventType(ev.GetType());
-ArraySegment<byte> payload = SerializeEventUsingProtoBuf(ev); // You can use any type of serialization method
 
 var data = new UncommittedMessages(
     SequentialGuid.NewGuid(), // correlationId
@@ -88,8 +89,10 @@ await store.AppendToStream(
     data);
 ```
 
+More examples you can find on [wiki](https://github.com/getmanta/manta/wiki).
+
 # Documentation
-If you're looking for documentation, you can find it [here](https://github.com/getmanta/manta/wiki) when it will be ready.
+If you're looking for documentation, you can find it [here](https://github.com/getmanta/manta/wiki).
 
 # Contributing
 A contribution is welcome. Checkout [contributing rules](https://github.com/getmanta/manta/blob/master/CONTRIBUTING.md).
