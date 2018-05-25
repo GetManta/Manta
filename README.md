@@ -78,7 +78,7 @@ var data = new UncommittedMessages(
     {
         new MessageRecord(
             SequentialGuid.NewGuid(), // messageId
-            contractId,
+            contractName,
             payload)
     });
 
