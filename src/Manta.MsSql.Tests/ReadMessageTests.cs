@@ -7,8 +7,6 @@ namespace Manta.MsSql.Tests
 {
     public class ReadMessageTests : TestsBase
     {
-        public ReadMessageTests(LocalDbFixture fixture) : base(fixture) { }
-
         [Fact]
         public async void Can_read_message()
         {

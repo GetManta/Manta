@@ -8,8 +8,6 @@ namespace Manta.MsSql.Tests
 {
     public class DeleteStreamTests : TestsBase
     {
-        public DeleteStreamTests(LocalDbFixture fixture) : base(fixture) { }
-
         [Fact]
         public async void Deleting_stream_with_expected_version_doesnt_throws()
         {

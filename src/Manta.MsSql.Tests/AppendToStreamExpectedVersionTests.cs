@@ -8,8 +8,6 @@ namespace Manta.MsSql.Tests
 {
     public class AppendToStreamExpectedVersionTests : TestsBase
     {
-        public AppendToStreamExpectedVersionTests(LocalDbFixture fixture) : base(fixture) { }
-
         [Fact]
         public async void Appending_the_same_messages_to_existed_stream_with_proper_expected_version_should_be_idempotent()
         {

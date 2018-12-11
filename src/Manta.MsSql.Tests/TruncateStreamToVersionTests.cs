@@ -8,8 +8,6 @@ namespace Manta.MsSql.Tests
 {
     public class TruncateStreamToVersionTests : TestsBase
     {
-        public TruncateStreamToVersionTests(LocalDbFixture fixture) : base(fixture) { }
-
         [Fact]
         public async void Truncate_stream_with_expected_version_doesnt_throws()
         {

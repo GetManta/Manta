@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Manta.MsSql.Tests.Infrastructure
 {
-    [Collection("Manta collection")]
     public abstract class TestsBase : IDisposable
     {
         private readonly DatabaseInstance _dbInstance;
 
-        protected TestsBase(LocalDbFixture fixture)
+        protected TestsBase()
         {
-            _dbInstance = new DatabaseInstance(fixture.LocalDb);
+            _dbInstance = new DatabaseInstance();
             ConnectionString = _dbInstance.ConnectionString;
         }
 
