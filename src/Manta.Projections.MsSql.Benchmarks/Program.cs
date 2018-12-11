@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Benchmarks.Shared;
 using Manta.Projections.MsSql.Benchmarks.TestProjections;
@@ -13,6 +14,8 @@ namespace Manta.Projections.MsSql.Benchmarks
 
         private static void Main(string[] args)
         {
+            Console.WriteLine("Manta.Projections.MsSql.Benchmarks ({0}) without batching...", RuntimeInformation.FrameworkDescription);
+            Console.WriteLine("{0} ({1})", RuntimeInformation.OSDescription, RuntimeInformation.OSArchitecture);
             Console.WriteLine("Starting...");
 
             Install().Wait();

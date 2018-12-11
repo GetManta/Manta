@@ -19,7 +19,7 @@ namespace Manta.MsSql.Benchmarks
 
         private static void Main()
         {
-            Console.WriteLine("Manta Benchmarks ({0})");
+            Console.WriteLine("Manta.MsSql.Benchmarks ({0}) without batching...", RuntimeInformation.FrameworkDescription);
             Console.WriteLine("{0} ({1})", RuntimeInformation.OSDescription, RuntimeInformation.OSArchitecture);
 
             Install().Wait();
