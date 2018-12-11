@@ -8,8 +8,6 @@ namespace Manta.MsSql.Tests
 {
     public class AppendToStreamAnyVersionTests : TestsBase
     {
-        public AppendToStreamAnyVersionTests(LocalDbFixture fixture) : base(fixture) { }
-
         [Fact]
         public async void Appending_messages_to_empty_stream_with_any_version_not_throws()
         {

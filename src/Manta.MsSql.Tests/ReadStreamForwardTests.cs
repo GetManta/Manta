@@ -8,8 +8,6 @@ namespace Manta.MsSql.Tests
 {
     public class ReadStreamForwardTests : TestsBase
     {
-        public ReadStreamForwardTests(LocalDbFixture fixture) : base(fixture) { }
-
         [Fact]
         public async void Can_read_forward_all_messages()
         {

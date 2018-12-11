@@ -1,26 +1,19 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Manta.Projections.MsSql.Tests.Infrastructure
 {
-    [Collection("Manta projections collection")]
     public abstract class TestsBase : IDisposable
     {
         private readonly DatabaseInstance _dbInstance;
 
-        protected TestsBase(LocalDbFixture fixture)
+        protected TestsBase()
         {
-            _dbInstance = new DatabaseInstance(fixture.LocalDb);
+            _dbInstance = new DatabaseInstance();
             ConnectionString = _dbInstance.ConnectionString;
         }
 
         protected string ConnectionString { get; }
-
-        protected async Task ClearDatabase()
-        {
-            await _dbInstance.ClearDatabase();
-        }
 
         protected async Task<Projector> GetProjector(Action<ProjectorBase> cfg = null)
         {

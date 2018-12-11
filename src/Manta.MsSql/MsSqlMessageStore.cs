@@ -16,16 +16,7 @@ namespace Manta.MsSql
         public MsSqlMessageStore(MsSqlMessageStoreSettings settings)
         {
             _settings = settings;
-            CheckForBatchingAvailability();
             Advanced = new MsSqlMessageStoreAdvanced(_settings);
-        }
-
-        private void CheckForBatchingAvailability()
-        {
-            if (SqlClientSqlCommandSet.IsSqlCommandSetAvailable)
-            {
-                _settings.Logger.Info("Batching is not available.");
-            }
         }
 
         /// <inheritdoc />
@@ -98,78 +89,38 @@ namespace Manta.MsSql
 
         private async Task AppendToStreamWithExpectedVersion(string stream, int expectedVersion, UncommittedMessages data, CancellationToken token)
         {
-            if (SqlClientSqlCommandSet.IsSqlCommandSetAvailable && _settings.Batching && data.Messages.Length > 1)
+            using (var connection = new SqlConnection(_settings.ConnectionString))
             {
-                using (var connection = new SqlConnection(_settings.ConnectionString))
-                using (var batch = new SqlClientSqlCommandSet(connection))
+                await connection.OpenAsync(token).NotOnCapturedContext();
+                using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                 {
-                    var messageVersion = expectedVersion;
-                    foreach (var msg in data.Messages)
+                    try
                     {
-                        messageVersion += 1;
+                        var messageVersion = expectedVersion;
+                        foreach (var msg in data.Messages)
+                        {
+                            messageVersion += 1;
+                            using (var cmd = expectedVersion == 0 && messageVersion == 1
+                                ? connection.CreateCommandToAppendingWithNoStream(stream, data, msg)
+                                : connection.CreateCommandToAppendingWithExpectedVersion(stream, data, msg, messageVersion))
+                            {
+                                cmd.Transaction = tran;
+                                await cmd.ExecuteNonQueryAsync(token).NotOnCapturedContext();
+                            }
+                        }
 
-                        var cmd = expectedVersion == 0 && messageVersion == 1
-                            ? connection.CreateCommandToAppendingWithNoStream(stream, data, msg)
-                            : connection.CreateCommandToAppendingWithExpectedVersion(stream, data, msg, messageVersion);
-
-                        batch.Append(cmd);
+                        tran.Commit();
                     }
-
-                    await connection.OpenAsync(token).NotOnCapturedContext();
-                    using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+                    catch (SqlException e)
                     {
-                        try
-                        {
-                            batch.Transaction = tran;
-                            await batch.ExecuteNonQueryAsync(token).NotOnCapturedContext();
-                            tran.Commit();
-                        }
-                        catch (SqlException e)
-                        {
-                            tran.Rollback();
+                        tran.Rollback();
 
-                            if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
-                            {
-                                throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{stream}' with expected version {ExpectedVersion.Parse(expectedVersion)} failed.", e);
-                            }
-                            throw;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                using (var connection = new SqlConnection(_settings.ConnectionString))
-                {
-                    await connection.OpenAsync(token).NotOnCapturedContext();
-                    using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
-                    {
-                        try
+                        if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
                         {
-                            var messageVersion = expectedVersion;
-                            foreach (var msg in data.Messages)
-                            {
-                                messageVersion += 1;
-                                using (var cmd = expectedVersion == 0 && messageVersion == 1
-                                    ? connection.CreateCommandToAppendingWithNoStream(stream, data, msg)
-                                    : connection.CreateCommandToAppendingWithExpectedVersion(stream, data, msg, messageVersion))
-                                {
-                                    cmd.Transaction = tran;
-                                    await cmd.ExecuteNonQueryAsync(token).NotOnCapturedContext();
-                                }
-                            }
-                            tran.Commit();
+                            throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{stream}' with expected version {ExpectedVersion.Parse(expectedVersion)} failed.", e);
                         }
-                        catch (SqlException e)
-                        {
-                            tran.Rollback();
 
-                            if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
-                            {
-                                throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{stream}' with expected version {ExpectedVersion.Parse(expectedVersion)} failed.", e);
-                            }
-                            throw;
-                        }
+                        throw;
                     }
                 }
             }
@@ -179,67 +130,34 @@ namespace Manta.MsSql
         {
             _settings.Logger.Trace("Appending {0} messages to stream '{1}' with any version...", data.Messages.Length, stream);
 
-            if (SqlClientSqlCommandSet.IsSqlCommandSetAvailable && _settings.Batching && data.Messages.Length > 1)
+            using (var connection = new SqlConnection(_settings.ConnectionString))
             {
-                using (var connection = new SqlConnection(_settings.ConnectionString))
-                using (var batch = new SqlClientSqlCommandSet(connection))
+                await connection.OpenAsync(token).NotOnCapturedContext();
+                using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
                 {
-                    foreach (var msg in data.Messages)
+                    try
                     {
-                        batch.Append(connection.CreateCommandToAppendingWithAnyVersion(stream, data, msg));
+                        foreach (var msg in data.Messages)
+                        {
+                            using (var cmd = connection.CreateCommandToAppendingWithAnyVersion(stream, data, msg))
+                            {
+                                cmd.Transaction = tran;
+                                await cmd.ExecuteNonQueryAsync(token).NotOnCapturedContext();
+                            }
+                        }
+
+                        tran.Commit();
                     }
-
-                    await connection.OpenAsync(token).NotOnCapturedContext();
-                    using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+                    catch (SqlException e)
                     {
-                        try
-                        {
-                            batch.Transaction = tran;
-                            await batch.ExecuteNonQueryAsync(token).NotOnCapturedContext();
-                            tran.Commit();
-                        }
-                        catch (SqlException e)
-                        {
-                            tran.Rollback();
+                        tran.Rollback();
 
-                            if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
-                            {
-                                throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{stream}' with any version failed.", e);
-                            }
-                            throw;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                using (var connection = new SqlConnection(_settings.ConnectionString))
-                {
-                    await connection.OpenAsync(token).NotOnCapturedContext();
-                    using (var tran = connection.BeginTransaction(IsolationLevel.ReadCommitted))
-                    {
-                        try
+                        if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
                         {
-                            foreach (var msg in data.Messages)
-                            {
-                                using (var cmd = connection.CreateCommandToAppendingWithAnyVersion(stream, data, msg))
-                                {
-                                    cmd.Transaction = tran;
-                                    await cmd.ExecuteNonQueryAsync(token).NotOnCapturedContext();
-                                }
-                            }
-                            tran.Commit();
+                            throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{stream}' with any version failed.", e);
                         }
-                        catch (SqlException e)
-                        {
-                            tran.Rollback();
 
-                            if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
-                            {
-                                throw new WrongExpectedVersionException($"Appending {data.Messages.Length} messages to stream '{stream}' with any version failed.", e);
-                            }
-                            throw;
-                        }
+                        throw;
                     }
                 }
             }

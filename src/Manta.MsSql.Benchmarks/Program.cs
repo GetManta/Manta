@@ -30,6 +30,8 @@ namespace Manta.MsSql.Benchmarks
 
             MultithreadedAppendingTest(streams, messagesCount).Wait();
             MultithreadedReadingTest(streams.OrderBy(x => Guid.NewGuid()).ToList(), messagesCount).Wait();
+
+
             Console.ReadKey();
         }
 

@@ -8,8 +8,6 @@ namespace Manta.MsSql.Tests
 {
     public class LinearizerTests : TestsBase
     {
-        public LinearizerTests(LocalDbFixture fixture) : base(fixture) { }
-
         [Fact]
         public async void After_linearization_in_small_batches_head_position_should_be_equal_expected_number()
         {

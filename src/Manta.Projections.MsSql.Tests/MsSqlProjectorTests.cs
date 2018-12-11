@@ -12,8 +12,6 @@ namespace Manta.Projections.MsSql.Tests
 {
     public class MsSqlProjectorTests : TestsBase
     {
-        public MsSqlProjectorTests(LocalDbFixture fixture) : base(fixture) { }
-
         [Fact]
         public async void running_projector_without_adding_projections_not_throws()
         {

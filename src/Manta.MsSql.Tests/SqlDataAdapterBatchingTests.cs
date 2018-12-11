@@ -11,8 +11,6 @@ namespace Manta.MsSql.Tests
 {
     public class SqlDataAdapterBatchingTests : TestsBase
     {
-        public SqlDataAdapterBatchingTests(LocalDbFixture fixture) : base(fixture) { }
-
         [Fact]
         public async Task Batching_availability_check()
         {

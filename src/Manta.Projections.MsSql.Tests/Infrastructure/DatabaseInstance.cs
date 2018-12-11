@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
-using System.Data.SqlLocalDb;
-using System.IO;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Manta.MsSql;
 using Manta.MsSql.Installer;
@@ -13,71 +12,49 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
 {
     public class DatabaseInstance : IDisposable
     {
-        private readonly ISqlLocalDbInstance _localDbInstance;
+        private const string connectionStringTemplate = "data source=(local); initial catalog = [database-name]; Integrated Security = True; MultipleActiveResultSets = true";
+        private const string databaseNameToken = "[database-name]";
+
+        private readonly string _masterConnectionString;
         private readonly string _databaseName;
         private bool _databaseCreated;
 
-        public DatabaseInstance(ISqlLocalDbInstance localDbInstance)
+        public DatabaseInstance()
         {
-            _localDbInstance = localDbInstance;
             _databaseName = "MantaTests_" + Guid.NewGuid().ToString("N");
-            ConnectionString = CreateConnectionString(_localDbInstance, _databaseName);
-        }
-
-        private static string CreateConnectionString(ISqlLocalDbInstance localDbInstance, string databaseName)
-        {
-            var connectionStringBuilder = localDbInstance.CreateConnectionStringBuilder();
-            connectionStringBuilder.MultipleActiveResultSets = true;
-            connectionStringBuilder.IntegratedSecurity = true;
-            connectionStringBuilder.InitialCatalog = databaseName;
-
-            return connectionStringBuilder.ToString();
+            ConnectionString = connectionStringTemplate.Replace(databaseNameToken, _databaseName);
+            _masterConnectionString = connectionStringTemplate.Replace(databaseNameToken, "master");
         }
 
         public string ConnectionString { get; }
 
-        public async Task<Projector> GetProjector(Action<ProjectorBase> cfg)
-        {
-            if (!_databaseCreated) await CreateDatabase(GetLocation()).NotOnCapturedContext();
-            var projector = new MsSqlProjector("uniqueProjectorName", ConnectionString, new JilSerializer());
-            cfg?.Invoke(projector);
-            return projector;
-        }
-
         public async Task<IMessageStore> GetMessageStore(bool batching = true)
         {
-            if (!_databaseCreated) await CreateDatabase(GetLocation()).NotOnCapturedContext();
+            if (!_databaseCreated) await CreateDatabase().NotOnCapturedContext();
             await ClearDatabase();
             return new MsSqlMessageStore(new MsSqlMessageStoreSettings(ConnectionString, batching));
         }
 
-        public async Task ClearDatabase()
+        private async Task ClearDatabase()
         {
+            Debug.WriteLine($"Clearing database {_databaseName}");
             using (var connection = new SqlConnection(ConnectionString))
             {
                 await connection.OpenAsync().NotOnCapturedContext();
                 using (var cmd = connection.CreateCommand())
                 {
-                    cmd.CommandText = @"TRUNCATE TABLE [dbo].[MantaStreams];TRUNCATE TABLE [dbo].[MantaCheckpoints];UPDATE [dbo].[MantaStreamsStats] SET MaxMessagePosition = 0, CountOfAllMessages = 0";
+                    cmd.CommandText = @"TRUNCATE TABLE [dbo].[MantaStreams];TRUNCATE TABLE [dbo].[MantaCheckpoints];UPDATE [dbo].[MantaStreamsStats] SET MaxMessagePosition = 0, CountOfAllMessages = 0;";
                     await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
                 }
             }
         }
 
-        private static string GetLocation()
+        private async Task CreateDatabase()
         {
-            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "db");
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-            return path;
-        }
+            Debug.WriteLine($"Creating database {_databaseName}");
+            var commandText = $"CREATE DATABASE {_databaseName}";
 
-        private async Task CreateDatabase(string location = null)
-        {
-            var commandText = location == null
-                ? $"CREATE DATABASE {_databaseName}"
-                : $"CREATE DATABASE {_databaseName} ON (name = '{_databaseName}', filename = '{Path.Combine(location, _databaseName)}')";
-
-            using (var connection = _localDbInstance.CreateConnection())
+            using (var connection = new SqlConnection(_masterConnectionString))
             {
                 await connection.OpenAsync().NotOnCapturedContext();
                 using (var command = new SqlCommand(commandText, connection))
@@ -102,6 +79,10 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
 
         public void DropDatabase()
         {
+            if (!_databaseCreated) return;
+
+            Debug.WriteLine($"Dropping database {_databaseName}");
+
             using (var sqlConnection = new SqlConnection(ConnectionString))
             {
                 // Fixes: "Cannot drop database because it is currently in use"
@@ -110,7 +91,7 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
 
             try
             {
-                using (var cnn = _localDbInstance.CreateConnection())
+                using (var cnn = new SqlConnection(_masterConnectionString))
                 {
                     cnn.Open();
                     using (var command = new SqlCommand($"DROP DATABASE {_databaseName}", cnn))
@@ -123,24 +104,18 @@ namespace Manta.Projections.MsSql.Tests.Infrastructure
             {
                 // Nothing happened
             }
-
-            try
-            {
-                var path = GetLocation();
-                foreach (var file in Directory.GetFiles(path))
-                {
-                    File.Delete(file);
-                }
-                Directory.Delete(path, true);
-            }
-            catch
-            {
-                // nothing here
-            }
             finally
             {
                 _databaseCreated = false;
             }
+        }
+
+        public async Task<Projector> GetProjector(Action<ProjectorBase> cfg)
+        {
+            if (!_databaseCreated) await CreateDatabase().NotOnCapturedContext();
+            var projector = new MsSqlProjector("uniqueProjectorName", ConnectionString, new JilSerializer());
+            cfg?.Invoke(projector);
+            return projector;
         }
     }
 }
