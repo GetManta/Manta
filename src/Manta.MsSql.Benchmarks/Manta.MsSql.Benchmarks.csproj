@@ -1,19 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net461</TargetFramework>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jil" Version="2.16.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.6.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Benchmarks.Shared\Benchmarks.Shared.csproj" />
     <ProjectReference Include="..\Manta.MsSql\Manta.MsSql.csproj" />
     <ProjectReference Include="..\Manta.Sceleton\Manta.Sceleton.csproj" />
     <ProjectReference Include="..\Manta\Manta.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
 
 </Project>
