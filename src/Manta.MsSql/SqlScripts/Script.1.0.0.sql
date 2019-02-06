@@ -151,7 +151,7 @@ BEGIN
         s.[ContractName],
         s.[Payload]
     FROM
-        [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK)
+        [dbo].[MantaStreams] s
     WHERE
         s.[Name] = @StreamName
         AND s.[MessageVersion] >= @FromVersion
@@ -175,7 +175,7 @@ BEGIN
         s.[ContractName],
         s.[Payload]
     FROM
-        [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK)
+        [dbo].[MantaStreams] s
     WHERE
         s.[Name] = @StreamName
         AND s.[MessageVersion] = @MessageVersion
