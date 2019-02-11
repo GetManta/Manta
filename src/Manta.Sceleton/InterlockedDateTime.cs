@@ -16,19 +16,13 @@ namespace Manta.Sceleton
         /// Initializes a new instance of <see cref="T:InterlockedDateTime"/>
         /// </summary>
         /// <param name="initialValue">initial value</param>
-        public InterlockedDateTime(DateTime initialValue)
-        {
-            _value = initialValue.ToBinary();
-        }
+        public InterlockedDateTime(DateTime initialValue) => _value = initialValue.ToBinary();
 
         /// <summary>
         /// Sets a new value
         /// </summary>
         /// <param name="newValue">new value</param>
-        public void Set(DateTime newValue)
-        {
-            Interlocked.Exchange(ref _value, newValue.ToBinary());
-        }
+        public void Set(DateTime newValue) => Interlocked.Exchange(ref _value, newValue.ToBinary());
 
         /// <summary>
         /// Compares the current value and the comparand for equality and, if they are equal, 
@@ -37,10 +31,7 @@ namespace Manta.Sceleton
         /// <param name="newValue">new value</param>
         /// <param name="comparand">value to compare the current value with</param>
         /// <returns>the original value before any operation was performed</returns>
-        public DateTime CompareExchange(DateTime newValue, DateTime comparand)
-        {
-            var oldValue = Interlocked.CompareExchange(ref _value, newValue.ToBinary(), comparand.ToBinary());
-            return DateTime.FromBinary(oldValue);
-        }
+        public DateTime CompareExchange(DateTime newValue, DateTime comparand) =>
+            DateTime.FromBinary(Interlocked.CompareExchange(ref _value, newValue.ToBinary(), comparand.ToBinary()));
     }
 }
