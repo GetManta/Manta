@@ -74,7 +74,7 @@ BEGIN
         @Payload,
         @MetadataPayload
     FROM
-        [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK)
+        [dbo].[MantaStreams] s WITH(ROWLOCK)
     WHERE
         s.[Name] = @StreamName
 END;
@@ -94,7 +94,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF EXISTS(SELECT TOP 1 1 FROM [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK) WHERE s.[MessageId]=@MessageId) BEGIN
+    IF EXISTS(SELECT TOP 1 1 FROM [dbo].[MantaStreams] s WITH(ROWLOCK) WHERE s.[MessageId]=@MessageId) BEGIN
         RETURN; -- idempotency checking
     END
 
@@ -108,7 +108,7 @@ BEGIN
         @Payload,
         @MetadataPayload
     FROM
-        [dbo].[MantaStreams] s WITH(READPAST,ROWLOCK)
+        [dbo].[MantaStreams] s WITH(ROWLOCK)
     WHERE
         s.[Name] = @StreamName
         AND s.[MessageVersion] = (@MessageVersion - 1)
@@ -175,7 +175,7 @@ BEGIN
         s.[ContractName],
         s.[Payload]
     FROM
-        [dbo].[MantaStreams] s
+        [dbo].[MantaStreams] s WITH(ROWLOCK)
     WHERE
         s.[Name] = @StreamName
         AND s.[MessageVersion] = @MessageVersion
@@ -197,8 +197,16 @@ BEGIN
         @MessagePosition = [MessagePosition] = @MessagePosition + 1
     FROM
         [dbo].[MantaStreams] dest WITH (INDEX ([IX_MantaStreams_InternalId]))
-        INNER JOIN (SELECT TOP(@BatchSize) s.[InternalId] FROM [dbo].[MantaStreams] s WITH (READPAST,ROWLOCK) WHERE s.[MessagePosition] IS NULL ORDER BY s.[InternalId] ASC) src ON src.[InternalId] = dest.[InternalId]
-    OPTION (MAXDOP 1)
+        INNER JOIN (
+            SELECT TOP(@BatchSize)
+                s.[InternalId]
+            FROM
+                [dbo].[MantaStreams] s WITH (NOLOCK) -- we can use NOLOCK because only one linearizer can update [MessagePosition]
+            WHERE
+                s.[MessagePosition] IS NULL
+            ORDER BY
+                s.[InternalId] ASC) src ON src.[InternalId] = dest.[InternalId]
+    OPTION (MAXDOP 1) -- do not allow to parallerize, we need linear execution
 
     -- Update stats
     UPDATE [dbo].[MantaStreamsStats] SET
@@ -226,8 +234,18 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DELETE FROM [dbo].[MantaStreams] WHERE [Name] = @StreamName AND
-        (SELECT TOP(1) [MessageVersion] FROM [dbo].[MantaStreams] WHERE [Name] = @StreamName ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+    DELETE FROM
+        [dbo].[MantaStreams]
+    WHERE
+        [Name] = @StreamName AND (
+            SELECT TOP(1)
+                [MessageVersion]
+            FROM
+                [dbo].[MantaStreams]
+            WHERE
+                [Name] = @StreamName
+            ORDER BY
+                [MessageVersion] DESC) = @ExpectedVersion
 
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
@@ -245,8 +263,18 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DELETE s FROM [dbo].[MantaStreams] s WHERE s.[Name] = @StreamName AND s.[MessageVersion] <= @ToVersion AND
-        (SELECT TOP(1) [MessageVersion] FROM [dbo].[MantaStreams] WHERE [Name] = s.[Name] ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+    DELETE s FROM
+        [dbo].[MantaStreams] s
+    WHERE
+        s.[Name] = @StreamName AND
+        s.[MessageVersion] <= @ToVersion AND (
+            SELECT TOP(1)
+                [MessageVersion]
+            FROM
+                [dbo].[MantaStreams]
+            WHERE
+                [Name] = s.[Name]
+            ORDER BY [MessageVersion] DESC) = @ExpectedVersion
 
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
@@ -267,8 +295,18 @@ BEGIN
     IF(SELECT COUNT(1) FROM [dbo].[MantaStreams] s WHERE s.[Name] = @StreamName AND s.[Timestamp] <= @ToCreationDate) = 0
         RETURN;
 
-    DELETE s FROM [dbo].[MantaStreams] s WHERE s.[Name] = @StreamName AND s.[Timestamp] <= @ToCreationDate AND
-        (SELECT TOP(1) [MessageVersion] FROM [dbo].[MantaStreams] WHERE [Name] = s.[Name] ORDER BY [MessageVersion] DESC) = @ExpectedVersion
+    DELETE s FROM
+        [dbo].[MantaStreams] s
+    WHERE
+        s.[Name] = @StreamName AND
+        s.[Timestamp] <= @ToCreationDate AND (
+            SELECT TOP(1)
+                [MessageVersion]
+            FROM
+                [dbo].[MantaStreams]
+            WHERE
+                [Name] = s.[Name]
+            ORDER BY [MessageVersion] DESC) = @ExpectedVersion
 
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion',16,1);
