@@ -9,16 +9,17 @@ namespace Manta.MsSql
 {
     public class MsSqlLinearizer : Linearizer
     {
+        public const int DefaultBatchSize = 500;
         private const int defaultCommandTimeoutInSeconds = 120;
         private const string paramBatchSize = "@BatchSize";
         private const string mantaLinearizeStreamsCommand = "mantaLinearizeStreams";
 
         private readonly string _connectionString;
 
-        public MsSqlLinearizer(string connectionString, ILogger logger, int batchSize = 5000)
+        public MsSqlLinearizer(string connectionString, ILogger logger, int batchSize = DefaultBatchSize)
             : this(connectionString, logger, TimeSpan.Zero, TimeSpan.Zero, batchSize) { }
 
-        public MsSqlLinearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan workDuration, int batchSize = 5000)
+        public MsSqlLinearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan workDuration, int batchSize = DefaultBatchSize)
             : base(logger, timeout, workDuration)
         {
             if (connectionString.IsNullOrEmpty()) throw new ArgumentException("ConnectionString can not be null or empty.", nameof(connectionString));
@@ -42,16 +43,21 @@ namespace Manta.MsSql
         {
             if (_connectionString == null) return false;
 
-            using (var cnn = new SqlConnection(_connectionString))
-            using (var cmd = cnn.CreateCommand(mantaLinearizeStreamsCommand, defaultCommandTimeoutInSeconds))
+            using (var scope = TransactionScopeHelper.New())
             {
-                cmd.AddInputParam(paramBatchSize, SqlDbType.Int, BatchSize);
+                using (var cnn = new SqlConnection(_connectionString))
+                using (var cmd = cnn.CreateCommand(mantaLinearizeStreamsCommand, defaultCommandTimeoutInSeconds))
+                {
+                    cmd.AddInputParam(paramBatchSize, SqlDbType.Int, BatchSize);
 
-                await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
-                var result = await cmd.ExecuteScalarAsync(cancellationToken)
-                    .NotOnCapturedContext();
+                    await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
+                    var result = await cmd.ExecuteScalarAsync(cancellationToken)
+                        .NotOnCapturedContext();
 
-                return result != null && result != DBNull.Value && (bool)result;
+                    scope.Complete();
+
+                    return result != null && result != DBNull.Value && (bool)result;
+                }
             }
         }
     }

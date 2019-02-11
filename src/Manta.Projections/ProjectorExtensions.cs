@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Transactions;
 
 namespace Manta.Projections
 {
     internal static class ProjectorExtensions
     {
-        private static readonly TransactionOptions transactionOptions = new TransactionOptions
-        {
-            IsolationLevel = IsolationLevel.ReadCommitted
-        };
-
         public static long[] GenerateRanges(this Projector p, long min, long max, long range)
         {
             if (min < 0) throw new ArgumentException("Min value must be greater or equal zero.", nameof(min));
@@ -25,14 +19,6 @@ namespace Manta.Projections
             }
 
             return ranges;
-        }
-
-        public static TransactionScope NewTransactionScope(this Projector p)
-        {
-            return new TransactionScope(
-                TransactionScopeOption.RequiresNew,
-                transactionOptions,
-                TransactionScopeAsyncFlowOption.Enabled);
         }
     }
 }

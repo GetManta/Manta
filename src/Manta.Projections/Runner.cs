@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Manta.Sceleton;
@@ -9,8 +8,8 @@ namespace Manta.Projections
 {
     internal class Runner : IDisposable
     {
-        private System.Timers.Timer _runnerTimer;
-        private CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
+        private Timer _runnerTimer;
+        private System.Threading.CancellationTokenSource _disposedTokenSource = new System.Threading.CancellationTokenSource();
         private volatile bool _isRunning;
         private readonly InterlockedDateTime _startedAt;
         private readonly TimeoutCalculator _timeoutCalc;
@@ -27,10 +26,10 @@ namespace Manta.Projections
             _runnerTimer = CreateTimer(_timeoutCalc);
         }
 
-        private System.Timers.Timer CreateTimer(TimeoutCalculator timeoutCalc)
+        private Timer CreateTimer(TimeoutCalculator timeoutCalc)
         {
             var timeout = timeoutCalc.CalculateNext();
-            var result = new System.Timers.Timer(timeout) { AutoReset = false };
+            var result = new Timer(timeout) { AutoReset = false };
             result.Elapsed += OnTimerElapsed;
             return result;
         }

@@ -193,11 +193,15 @@ namespace Manta.Projections
             try
             {
                 sw.Start();
-                using (var scope = this.NewTransactionScope())
+                using (var scope = TransactionScopeHelper.New())
                 {
                     foreach (var envelope in envelopes)
                     {
-                        if (!descriptor.CanDispatch(envelope.Message.GetType(), envelope.Meta.MessagePosition)) continue;
+                        if (!descriptor.CanDispatch(envelope.Message.GetType(), envelope.Meta.MessagePosition))
+                        {
+                            descriptor.Checkpoint.Position = envelope.Meta.MessagePosition;
+                            continue;
+                        }
 
                         context.Reset();
                         if (await DispatchProjection(descriptor, envelope, context).NotOnCapturedContext())
@@ -217,7 +221,11 @@ namespace Manta.Projections
             {
                 sw.Stop();
                 descriptor.Checkpoint.Position = context.StartingBatchAtPosition; // restoring position
-                await UpdateCheckpoint(descriptor.Checkpoint, descriptor.UndropRequested, token).NotOnCapturedContext();
+                using (var scope = TransactionScopeHelper.New())
+                {
+                    await UpdateCheckpoint(descriptor.Checkpoint, descriptor.UndropRequested, token).NotOnCapturedContext();
+                    scope.Complete();
+                }
                 return DispatchingResult.DroppedOnException(descriptor, envelopes.Count, sw.ElapsedMilliseconds, e);
             }
         }
