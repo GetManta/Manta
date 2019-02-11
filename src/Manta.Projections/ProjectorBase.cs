@@ -121,7 +121,9 @@ namespace Manta.Projections
                 var resultWithException = results.FirstOrDefault(x => x.HaveCaughtException());
                 if (resultWithException != null)
                 {
-                    Logger.Error("Projection '{0}' dropped and returns exception: {1}", resultWithException.Descriptor.ContractName, resultWithException.Exception.Message);
+                    Logger.Error("Projection '{0}' dropped and returns exception: {1}",
+                        resultWithException.Descriptor.ContractName,
+                        resultWithException.Exception.Message);
                 }
 
                 if (results.All(x => x.AnyDispatched == false)) break;
