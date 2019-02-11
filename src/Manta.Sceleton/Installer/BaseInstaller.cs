@@ -12,10 +12,7 @@ namespace Manta.Sceleton.Installer
     {
         private readonly Assembly _assembly;
 
-        protected BaseInstaller(Assembly moduleAssembly)
-        {
-            _assembly = moduleAssembly ?? throw new ArgumentNullException(nameof(moduleAssembly));
-        }
+        protected BaseInstaller(Assembly moduleAssembly) => _assembly = moduleAssembly ?? throw new ArgumentNullException(nameof(moduleAssembly));
 
         public async Task Execute(CancellationToken token = default(CancellationToken))
         {
@@ -29,14 +26,7 @@ namespace Manta.Sceleton.Installer
         protected abstract Task Install(Version installedVersion, CancellationToken token = default(CancellationToken));
         protected abstract Task<Version> GetInstalledVersion(CancellationToken token = default(CancellationToken));
 
-        protected Version GetModuleVersion()
-        {
-            return _assembly.GetName().Version;
-        }
-
-        protected bool ShouldInstall(Version currentVersion)
-        {
-            return currentVersion == null || GetModuleVersion() > currentVersion;
-        }
+        protected Version GetModuleVersion() => _assembly.GetName().Version;
+        protected bool ShouldInstall(Version currentVersion) => currentVersion == null || GetModuleVersion() > currentVersion;
     }
 }

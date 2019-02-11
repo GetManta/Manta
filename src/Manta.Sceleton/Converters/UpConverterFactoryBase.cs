@@ -17,6 +17,7 @@ namespace Manta.Sceleton.Converters
         {
             _converters = new Dictionary<Type, Type>();
             _delegates = new Dictionary<Type, Func<object, object, object>>();
+
             foreach (var assembly in assemblies)
             {
                 foreach (var converterType in assembly.GetTypes().Where(IsConverter))
@@ -41,10 +42,7 @@ namespace Manta.Sceleton.Converters
             return _converters.TryGetValue(messageType, out var converterType) ? converterType : null;
         }
 
-        private static bool IsConverter(Type type)
-        {
-            return typeof(IUpConvertMessage).IsAssignableFrom(type);
-        }
+        private static bool IsConverter(Type type) => typeof(IUpConvertMessage).IsAssignableFrom(type);
 
         public object Invoke(IUpConvertMessage converter, Type messageType, object message)
         {
